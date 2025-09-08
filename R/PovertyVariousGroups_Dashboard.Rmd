@@ -1,0 +1,390 @@
+---
+title: "Dashboard comparing poverty for various groups"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation:        columns
+    vertical_layout:    fill
+    runtime:            shiny
+---
+
+<style>
+/* Change flexdashboard top bar color */
+.navbar.navbar-inverse {
+  background-color: #044368 !important;
+  border-color: #044368 !important;
+}
+</style>
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(pipr)
+library(ggplot2)
+library(shiny)
+library(haven)
+library(writexl)
+library(patchwork)
+```
+
+```{r}
+# Definitions 
+povertylines <- c(3.00, 4.20, 8.30)
+```
+
+
+
+```{r}
+### GET THE NECESSARY DATA ###
+
+# Classification data 
+
+class_data <- read_dta(
+  "https://raw.githubusercontent.com/GPID-WB/Class/6e6123c1e5f1eea1636dd99f387aa98517d1ac7f/OutputData/CLASS.dta"
+) %>%
+  filter(year_release == max(year_release, na.rm = TRUE)) %>%
+  select(economy, code, region, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
+  rename(iso3c = code) %>%
+  mutate(iso3c = trimws(toupper(iso3c)))
+
+
+
+# Define old poverty regions
+
+reg_old <- get_aux("country_list") %>% 
+  select(country_code,pcn_region) %>%
+  rename(iso3c = country_code) %>%
+  rename(region_old = pcn_region)
+
+
+
+# Poverty data from PIP
+
+country_data <- purrr::map_df(
+  .x = povertylines,
+  .f = pipr::get_stats,
+  country = "all",
+  year = "all",
+  nowcast = TRUE
+) %>%
+  rename(iso3c = country_code) %>%
+  left_join(class_data, by = "iso3c") %>%
+  left_join(reg_old, by = "iso3c") %>%
+  select(region_name, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
+  mutate(pop_in_pov = headcount * pop)
+
+```
+
+
+```{r}
+### Create dynamic sidebar to shift with tab changes ###
+
+output$dynamic_sidebar <- renderUI({
+  tab <- input$active_tab
+  if (is.null(tab)) tab <- "Poverty headcount and the number of poor"
+  
+  if (tab == "Poverty headcount and the number of poor") {
+    tagList(
+      selectInput("group_var1", "Select the group to chart",
+                  choices = c("region_name",
+                              "region_old",
+                              "incgroup_historical",
+                              "incgroup_current",
+                              "fcv_historical",
+                              "fcv_current",
+                              "ida_historical",
+                              "ida_current")),
+      uiOutput("group0_ui"),
+      
+      radioButtons("selected_line", "Select Poverty Line",
+                   choices = unique(country_data$poverty_line),
+                   selected = unique(country_data$poverty_line)[1])
+    )
+  } 
+  
+  else if (tab == "Comparison") {
+    tagList(
+      selectInput("group_var1", "Select group for figure 1",
+                  choices = c("region_name",
+                              "region_old",
+                              "incgroup_historical",
+                              "incgroup_current",
+                              "fcv_historical",
+                              "fcv_current",
+                              "ida_historical",
+                              "ida_current")),
+      uiOutput("group1_ui"),
+
+      selectInput("group_var2", "Select group for figure 2",
+                  choices = c("region_name",
+                              "region_old",
+                              "incgroup_historical",
+                              "incgroup_current",
+                              "fcv_historical",
+                              "fcv_current",
+                              "ida_historical",
+                              "ida_current")),
+      uiOutput("group2_ui"),
+
+      radioButtons("selected_line", "Select Poverty Line",
+                   choices = unique(country_data$poverty_line),
+                   selected = unique(country_data$poverty_line)[1])
+    )
+  }
+})
+
+
+# Group to select in Tab 1 
+
+output$group0_ui <- renderUI({
+  req(input$group_var1)
+  choices <- sort(unique(country_data[[input$group_var1]]))
+  checkboxGroupInput("group1_values", "Select/deselect",
+                     choices = choices,
+                     selected = choices)
+})
+
+
+# Group to select in Tab 2 - first chart
+
+output$group1_ui <- renderUI({
+  req(input$group_var1)
+  choices <- sort(unique(country_data[[input$group_var1]]))
+  checkboxGroupInput("group1_values", "Select/deselect",
+                     choices = choices,
+                     selected = choices)
+})
+
+
+# Group to select in Tab 2 - second chart
+
+output$group2_ui <- renderUI({
+  req(input$group_var2)
+  choices <- sort(unique(country_data[[input$group_var2]]))
+  checkboxGroupInput("group2_values", "Select/deselect",
+                     choices = choices,
+                     selected = choices)
+})
+
+
+
+# Data to use in the figures 
+
+filtered_data <- reactive({
+  req(input$group_var1, input$group1_values,
+      input$group_var2, input$group2_values,
+      input$selected_line)
+
+d <- country_data %>%
+    filter(poverty_line == as.numeric(input$selected_line))
+  
+  # Number of poor for first tab
+  d0 <- d %>%
+    filter(.data[[input$group_var1]] %in% input$group1_values) %>%
+    group_by(year, group_value = .data[[input$group_var1]]) %>%
+    summarise(
+      pop_in_pov = sum(pop_in_pov, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Poverty rate for chart in first tab & first chart in second tab
+  d1 <- d %>%
+    filter(.data[[input$group_var1]] %in% input$group1_values) %>%
+    group_by(year, group_value = .data[[input$group_var1]]) %>%
+    summarise(
+      headcount = weighted.mean(headcount, pop, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Poverty rate for second chart second tab
+  d2 <- d %>%
+    filter(.data[[input$group_var2]] %in% input$group2_values) %>%
+    group_by(year, group_value = .data[[input$group_var2]]) %>%
+    summarise(
+      headcount = weighted.mean(headcount, pop, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  list(graph0 = d0, graph1 = d1, graph2 = d2)
+})
+
+```
+
+
+
+```{r}
+### Download files ###
+
+output$download_filtered <- downloadHandler(
+  filename = function() {
+    paste0("filtered_data_", Sys.Date(), ".csv")
+  },
+  content = function(file) {
+    write_csv(filtered_data(), file)
+  }
+)
+
+output$download_filtered_csv <- downloadHandler(
+  filename = function() {
+    paste0("filtered_data_", Sys.Date(), ".csv")
+  },
+  content = function(file) {
+    write_csv(filtered_data(), file)
+  }
+)
+
+output$download_filtered_dta <- downloadHandler(
+  filename = function() {
+    paste0("filtered_data_", Sys.Date(), ".dta")
+  },
+  content = function(file) {
+    write_dta(filtered_data(), file)
+  }
+)
+
+output$download_filtered_excel <- downloadHandler(
+  filename = function() {
+    paste0("filtered_data_", Sys.Date(), ".xlsx")
+  },
+  content = function(file) {
+    write_xlsx(filtered_data(), file)
+  }
+)
+
+```
+
+
+Sidebar {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+
+uiOutput("dynamic_sidebar")
+
+downloadButton("download_filtered_csv", "Download CSV", class = "btn-sm")
+downloadButton("download_filtered_dta", "Download Stata (.dta)", class = "btn-sm")
+downloadButton("download_filtered_excel", "Download Excel (.xlsx)", class = "btn-sm")
+
+```
+
+
+Column
+-----------------------------------------------------------------------
+```{r}
+tabsetPanel(
+  id = "active_tab",
+  type = "tabs",
+  tabPanel("Poverty headcount and the number of poor"),
+  tabPanel("Comparison")
+)
+
+```
+
+
+```{r}
+plotOutput("main_plot")
+```
+
+```{r}
+output$main_plot <- renderPlot({
+  if (input$active_tab == "Poverty headcount and the number of poor") {
+    d_list <- filtered_data()
+    
+    if (nrow(d_list$graph1) == 0 & nrow(d_list$graph2) == 0) {
+      ggplot() +
+        annotate("text", x = 1, y = 1, label = "This selection has no data.", size = 6, hjust = 0.5) +
+        theme_void()
+    } 
+    
+    else {
+      p1 <- ggplot(d_list$graph1, 
+                   aes(x = year, y = headcount * 100, color = group_value)) +
+        geom_line(size = 1) +
+        labs(
+          title = paste("Poverty rate by", input$group_var1),
+          y = "Poverty headcount, %", 
+          x = "") +
+        theme_minimal() +
+        theme(
+          legend.position = "bottom",
+          legend.text = element_text(size = 8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.3, "cm"),
+          legend.spacing.x = unit(0.1, "cm"),
+          plot.margin = margin(2, 2, 2, 2)
+        )
+      
+      p2 <- ggplot(d_list$graph0, 
+                   aes(x = year, y = pop_in_pov/1e6, fill = group_value)) +
+        geom_area(alpha = 0.8) +
+        labs(
+          title = paste("Number of poor by", input$group_var1),
+          y = "Millions of poor", 
+          x = "") +
+        theme_minimal() +
+        theme(
+          legend.position = "bottom",
+          legend.text = element_text(size = 8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.3, "cm"),
+          legend.spacing.x = unit(0.1, "cm"),
+          plot.margin = margin(2, 2, 2, 2)
+        )
+      
+      p1 + p2
+    }
+  }
+  
+  else if (input$active_tab == "Comparison") {
+    d_list <- filtered_data()
+    
+    if (nrow(d_list$graph1) == 0 & nrow(d_list$graph2) == 0) {
+      ggplot() +
+        annotate("text", x = 1, y = 1, label = "This selection has no data.", size = 6, hjust = 0.5) +
+        theme_void()
+    } 
+    
+    else {
+      p1 <- ggplot(d_list$graph1, 
+                   aes(x = year, y = headcount * 100, color = group_value)) +
+        geom_line(size = 1) +
+        labs(
+          title = paste("Poverty rate by", input$group_var1),
+          y = "Poverty headcount, %", 
+          x = "") +
+        theme_minimal() +
+        theme(
+          legend.position = "bottom",
+          legend.text = element_text(size = 8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.3, "cm"),
+          legend.spacing.x = unit(0.1, "cm"),
+          plot.margin = margin(2, 2, 2, 2)
+        )
+      
+      p2 <- ggplot(d_list$graph2, 
+                   aes(x = year, y = headcount * 100, color = group_value)) +
+        geom_line(size = 1) +
+        labs(
+          title = paste("Poverty rate by", input$group_var2),
+          y = "Poverty headcount, %", 
+          x = "") +
+        theme_minimal() +
+        theme(
+          legend.position = "bottom",
+          legend.text = element_text(size = 8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.3, "cm"),
+          legend.spacing.x = unit(0.1, "cm"),
+          plot.margin = margin(2, 2, 2, 2)
+        )
+      
+      p1 + p2
+    }
+  }
+})
+
+
+
+```
+
+
+
