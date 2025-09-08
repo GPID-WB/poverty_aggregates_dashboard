@@ -1,10 +1,10 @@
 ---
 title: "Dashboard comparing poverty for various groups"
+runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
-    orientation:        columns
-    vertical_layout:    fill
-    runtime:            shiny
+    orientation: columns
+    vertical_layout: fill
 ---
 
 <style>
@@ -16,33 +16,31 @@ output:
 </style>
 
 ```{r setup, include=FALSE}
-library(flexdashboard)
-library(tidyverse)
-library(pipr)
+library(fastverse)
 library(ggplot2)
 library(shiny)
-library(haven)
 library(writexl)
 library(patchwork)
 ```
 
 
-```{r}
-country_data <- 
-  fst::read_fst(path = fs::path(here::here(), 
-                                "data", 
-                                "country_data.fst"))
+```{r read-country-data}
+povertylines <- c(3.00, 4.20, 8.30)
+path_fst <- fs::path(here::here(), "data", "country_data.fst")
+country_data <-
+  fst::read_fst(path          = path_fst, 
+                as.data.table = TRUE)
+          
 
 ```
 
 
-```{r}
-### Create dynamic sidebar to shift with tab changes ###
 
+```{r sidebar}
 output$dynamic_sidebar <- renderUI({
   tab <- input$active_tab
   if (is.null(tab)) tab <- "Poverty headcount and the number of poor"
-  
+
   if (tab == "Poverty headcount and the number of poor") {
     tagList(
       selectInput("group_var1", "Select the group to chart",
@@ -55,16 +53,18 @@ output$dynamic_sidebar <- renderUI({
                               "ida_historical",
                               "ida_current")),
       uiOutput("group0_ui"),
-      
-      radioButtons("selected_line", "Select Poverty Line",
-                   choices = unique(country_data$poverty_line),
-                   selected = unique(country_data$poverty_line)[1])
+
+      radioButtons("selected_line",
+                   "Select Poverty Line",
+                   choices  = povertylines,
+                   selected = povertylines[1])
     )
-  } 
-  
+  }
+
   else if (tab == "Comparison") {
     tagList(
-      selectInput("group_var1", "Select group for figure 1",
+      selectInput("group_var1",
+                  "Select group for figure 1",
                   choices = c("region_name",
                               "region_old",
                               "incgroup_historical",
@@ -75,7 +75,8 @@ output$dynamic_sidebar <- renderUI({
                               "ida_current")),
       uiOutput("group1_ui"),
 
-      selectInput("group_var2", "Select group for figure 2",
+      selectInput("group_var2",
+                  "Select group for figure 2",
                   choices = c("region_name",
                               "region_old",
                               "incgroup_historical",
@@ -86,90 +87,106 @@ output$dynamic_sidebar <- renderUI({
                               "ida_current")),
       uiOutput("group2_ui"),
 
-      radioButtons("selected_line", "Select Poverty Line",
-                   choices = unique(country_data$poverty_line),
-                   selected = unique(country_data$poverty_line)[1])
+      radioButtons("selected_line",
+                   "Select Poverty Line",
+                   choices  = povertylines,
+                   selected = povertylines[1])
     )
   }
 })
 
+```
 
-# Group to select in Tab 1 
 
+```{r output-groupui}
+# Small helper to build sorted unique choices fast
+group_choices <- function(var) {
+  vals <- country_data[[var]]
+  vals <- vals[!is.na(vals)]
+  sort(funique(vals))
+}
+
+# Tab 1
 output$group0_ui <- renderUI({
   req(input$group_var1)
-  choices <- sort(unique(country_data[[input$group_var1]]))
-  checkboxGroupInput("group1_values", "Select/deselect",
-                     choices = choices,
+  choices <- group_choices(input$group_var1)
+  checkboxGroupInput("group0_values",
+                     "Select/deselect",
+                     choices  = choices,
                      selected = choices)
 })
 
-
-# Group to select in Tab 2 - first chart
-
+# Tab 2 - first chart
 output$group1_ui <- renderUI({
   req(input$group_var1)
-  choices <- sort(unique(country_data[[input$group_var1]]))
-  checkboxGroupInput("group1_values", "Select/deselect",
+  choices <- group_choices(input$group_var1)
+  checkboxGroupInput("group1_values",
+                     "Select/deselect",
                      choices = choices,
                      selected = choices)
 })
 
-
-# Group to select in Tab 2 - second chart
-
+# Tab 2 - second chart
 output$group2_ui <- renderUI({
   req(input$group_var2)
-  choices <- sort(unique(country_data[[input$group_var2]]))
-  checkboxGroupInput("group2_values", "Select/deselect",
-                     choices = choices,
+  choices <- group_choices(input$group_var2)
+  checkboxGroupInput("group2_values",
+                     "Select/deselect",
+                     choices  = choices,
                      selected = choices)
-})
-
-
-
-# Data to use in the figures 
-
-filtered_data <- reactive({
-  req(input$group_var1, input$group1_values,
-      input$group_var2, input$group2_values,
-      input$selected_line)
-
-d <- country_data %>%
-    filter(poverty_line == as.numeric(input$selected_line))
-  
-  # Number of poor for first tab
-  d0 <- d %>%
-    filter(.data[[input$group_var1]] %in% input$group1_values) %>%
-    group_by(year, group_value = .data[[input$group_var1]]) %>%
-    summarise(
-      pop_in_pov = sum(pop_in_pov, na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  # Poverty rate for chart in first tab & first chart in second tab
-  d1 <- d %>%
-    filter(.data[[input$group_var1]] %in% input$group1_values) %>%
-    group_by(year, group_value = .data[[input$group_var1]]) %>%
-    summarise(
-      headcount = weighted.mean(headcount, pop, na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  # Poverty rate for second chart second tab
-  d2 <- d %>%
-    filter(.data[[input$group_var2]] %in% input$group2_values) %>%
-    group_by(year, group_value = .data[[input$group_var2]]) %>%
-    summarise(
-      headcount = weighted.mean(headcount, pop, na.rm = TRUE),
-      .groups = "drop"
-    )
-
-  list(graph0 = d0, graph1 = d1, graph2 = d2)
 })
 
 ```
 
+
+```{r filtered-data}
+# ---- filtered data for figures ----
+
+filtered_data <- reactive({
+  tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+  req(input$group_var1, input$selected_line)
+
+  dt <- country_data[poverty_line == as.numeric(input$selected_line)]
+
+  # ---- selections for group_var1
+  # On the first tab, use group0 checkboxes; on Comparison, use group1 checkboxes.
+  sel_g1 <- if (tab == "Comparison") input$group1_values else input$group0_values
+  if (is.null(sel_g1)) sel_g1 <- unique(dt[[input$group_var1]])
+
+  # ---- d0: number of poor (always available; used on first tab)
+  d0 <- dt[
+    get(input$group_var1) %in% sel_g1,
+    .(pop_in_pov = sum(pop_in_pov, na.rm = TRUE)),
+    by = c("year", input$group_var1)
+  ]
+
+  # ---- d1: poverty rate by group_var1 (used on both tabs)
+  d1 <- dt[
+    get(input$group_var1) %in% sel_g1,
+    .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
+    by = c("year", input$group_var1)
+  ]
+
+  # ---- d2: only needed on Comparison; otherwise return empty DT
+  if (tab == "Comparison") {
+    req(input$group_var2)
+    sel_g2 <- input$group2_values
+    if (is.null(sel_g2)) sel_g2 <- unique(dt[[input$group_var2]])
+    d2 <- dt[
+      get(input$group_var2) %in% sel_g2,
+      .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
+      by = c("year", input$group_var2)
+    ]
+  } else {
+    d2 <- data.table()
+  }
+
+  list(graph0 = d0, graph1 = d1, graph2 = d2)
+})
+
+
+
+```
 
 
 ```{r}
@@ -220,9 +237,15 @@ Sidebar {.sidebar}
 
 uiOutput("dynamic_sidebar")
 
-downloadButton("download_filtered_csv", "Download CSV", class = "btn-sm")
-downloadButton("download_filtered_dta", "Download Stata (.dta)", class = "btn-sm")
-downloadButton("download_filtered_excel", "Download Excel (.xlsx)", class = "btn-sm")
+downloadButton("download_filtered_csv", 
+               "Download CSV", 
+               class = "btn-sm")
+downloadButton("download_filtered_dta",
+               "Download Stata (.dta)", 
+               class = "btn-sm")
+downloadButton("download_filtered_excel", 
+               "Download Excel (.xlsx)", 
+               class = "btn-sm")
 
 ```
 
@@ -231,7 +254,7 @@ Column
 -----------------------------------------------------------------------
 ```{r}
 tabsetPanel(
-  id = "active_tab",
+  id   = "active_tab",
   type = "tabs",
   tabPanel("Poverty headcount and the number of poor"),
   tabPanel("Comparison")
@@ -240,104 +263,118 @@ tabsetPanel(
 ```
 
 
-```{r}
+```{r plot-output-mainplot}
 plotOutput("main_plot")
 ```
 
-```{r}
+```{r main-plot-construct}
 output$main_plot <- renderPlot({
+
+  d_list <- filtered_data()
+
   if (input$active_tab == "Poverty headcount and the number of poor") {
-    d_list <- filtered_data()
-    
-    if (nrow(d_list$graph1) == 0 & nrow(d_list$graph2) == 0) {
+
+    if (fnrow(d_list$graph1) == 0 & fnrow(d_list$graph2) == 0) {
       ggplot() +
-        annotate("text", x = 1, y = 1, label = "This selection has no data.", size = 6, hjust = 0.5) +
+        annotate("text",
+                 x     = 1,
+                 y     = 1,
+                 label = "This selection has no data.",
+                 size  = 6,
+                 hjust = 0.5) +
         theme_void()
-    } 
-    
+    }
+
     else {
-      p1 <- ggplot(d_list$graph1, 
-                   aes(x = year, y = headcount * 100, color = group_value)) +
-        geom_line(size = 1) +
+      p1 <- ggplot(d_list$graph1,
+                   aes(x     = year,
+                       y     = headcount * 100,
+                       color = .data[[input$group_var1]])) +
+        geom_line(linewidth = 1) +
         labs(
           title = paste("Poverty rate by", input$group_var1),
-          y = "Poverty headcount, %", 
-          x = "") +
+          y     = "Poverty headcount, %",
+          x     = "") +
         theme_minimal() +
         theme(
-          legend.position = "bottom",
-          legend.text = element_text(size = 8),
-          legend.title = element_blank(),
-          legend.key.size = unit(0.3, "cm"),
+          legend.position  = "bottom",
+          legend.text      = element_text(size = 8),
+          legend.title     = element_blank(),
+          legend.key.size  = unit(0.3, "cm"),
           legend.spacing.x = unit(0.1, "cm"),
-          plot.margin = margin(2, 2, 2, 2)
-        )
-      
-      p2 <- ggplot(d_list$graph0, 
-                   aes(x = year, y = pop_in_pov/1e6, fill = group_value)) +
+          plot.margin      = margin(2, 2, 2, 2))
+
+      p2 <- ggplot(d_list$graph0,
+                   aes(x    = year,
+                       y    = pop_in_pov/1e6,
+                       fill = .data[[input$group_var1]])) +
         geom_area(alpha = 0.8) +
         labs(
           title = paste("Number of poor by", input$group_var1),
-          y = "Millions of poor", 
+          y = "Millions of poor",
           x = "") +
         theme_minimal() +
         theme(
-          legend.position = "bottom",
-          legend.text = element_text(size = 8),
-          legend.title = element_blank(),
-          legend.key.size = unit(0.3, "cm"),
+          legend.position  = "bottom",
+          legend.text      = element_text(size = 8),
+          legend.title     = element_blank(),
+          legend.key.size  = unit(0.3, "cm"),
           legend.spacing.x = unit(0.1, "cm"),
-          plot.margin = margin(2, 2, 2, 2)
-        )
-      
+          plot.margin      = margin(2, 2, 2, 2))
+
       p1 + p2
     }
-  }
-  
-  else if (input$active_tab == "Comparison") {
-    d_list <- filtered_data()
-    
+  } else if (input$active_tab == "Comparison") {
+
+
     if (nrow(d_list$graph1) == 0 & nrow(d_list$graph2) == 0) {
       ggplot() +
-        annotate("text", x = 1, y = 1, label = "This selection has no data.", size = 6, hjust = 0.5) +
+        annotate("text",
+                 x     = 1,
+                 y     = 1,
+                 label = "This selection has no data.",
+                 size  = 6,
+                 hjust = 0.5) +
         theme_void()
-    } 
-    
+    }
+
     else {
-      p1 <- ggplot(d_list$graph1, 
-                   aes(x = year, y = headcount * 100, color = group_value)) +
-        geom_line(size = 1) +
+      p1 <- ggplot(d_list$graph1,
+                   aes(x     = year,
+                       y     = headcount * 100,
+                       color = .data[[input$group_var1]])) +
+        geom_line(linewidth = 1) +
         labs(
           title = paste("Poverty rate by", input$group_var1),
-          y = "Poverty headcount, %", 
-          x = "") +
+          y     = "Poverty headcount, %",
+          x     = "") +
         theme_minimal() +
         theme(
-          legend.position = "bottom",
-          legend.text = element_text(size = 8),
-          legend.title = element_blank(),
-          legend.key.size = unit(0.3, "cm"),
+          legend.position  = "bottom",
+          legend.text      = element_text(size = 8),
+          legend.title     = element_blank(),
+          legend.key.size  = unit(0.3, "cm"),
           legend.spacing.x = unit(0.1, "cm"),
-          plot.margin = margin(2, 2, 2, 2)
-        )
-      
-      p2 <- ggplot(d_list$graph2, 
-                   aes(x = year, y = headcount * 100, color = group_value)) +
-        geom_line(size = 1) +
+          plot.margin      = margin(2, 2, 2, 2))
+
+      p2 <- ggplot(d_list$graph2,
+                   aes(x     = year,
+                       y     = headcount * 100,
+                       color = .data[[input$group_var2]])) +
+        geom_line(linewidth = 1) +
         labs(
           title = paste("Poverty rate by", input$group_var2),
-          y = "Poverty headcount, %", 
-          x = "") +
+          y     = "Poverty headcount, %",
+          x     = "") +
         theme_minimal() +
         theme(
-          legend.position = "bottom",
-          legend.text = element_text(size = 8),
-          legend.title = element_blank(),
-          legend.key.size = unit(0.3, "cm"),
+          legend.position  = "bottom",
+          legend.text      = element_text(size = 8),
+          legend.title     = element_blank(),
+          legend.key.size  = unit(0.3, "cm"),
           legend.spacing.x = unit(0.1, "cm"),
-          plot.margin = margin(2, 2, 2, 2)
-        )
-      
+          plot.margin      = margin(2, 2, 2, 2))
+
       p1 + p2
     }
   }
