@@ -24,19 +24,21 @@ library(patchwork)
 ```
 
 
-```{r read-country-data}
+
+
+```{r load-init}
 povertylines <- c(3.00, 4.20, 8.30)
 path_fst <- fs::path(here::here(), "data", "country_data.fst")
 country_data <-
   fst::read_fst(path          = path_fst, 
                 as.data.table = TRUE)
-space_var <- function(cn) {
-  gsub(pattern = "_", replacement = " ", x = cn)
+source(file = fs::path(here::here(), "R", "utils.R"))
+group_choices <- function(var) {
+    var  <- underscore_var(var)
+    vals <- country_data[[var]]
+    vals <- vals[!is.na(vals)]
+    sort(funique(vals))
 }
-underscore_var <- function(cn) {
-  gsub(pattern = " ", replacement = "_", x = cn)
-}
-
 ```
 
 
@@ -104,14 +106,6 @@ output$dynamic_sidebar <- renderUI({
 
 
 ```{r output-groupui}
-# Small helper to build sorted unique choices fast
-group_choices <- function(var) {
-  var  <- underscore_var(var)
-  vals <- country_data[[var]]
-  vals <- vals[!is.na(vals)]
-  sort(funique(vals))
-}
-
 # Tab 1
 output$group0_ui <- renderUI({
   req(input$group_var1)
@@ -147,7 +141,6 @@ output$group2_ui <- renderUI({
 
 ```{r filtered-data}
 # ---- filtered data for figures ----
-
 filtered_data <- reactive({
   tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
   req(input$group_var1, input$selected_line)
@@ -305,14 +298,8 @@ output$main_plot <- renderPlot({
           title = paste("Poverty rate by", input$group_var1),
           y     = "Poverty headcount, %",
           x     = "") +
-        theme_minimal() +
-        theme(
-          legend.position  = "bottom",
-          legend.text      = element_text(size = 8),
-          legend.title     = element_blank(),
-          legend.key.size  = unit(0.3, "cm"),
-          legend.spacing.x = unit(0.1, "cm"),
-          plot.margin      = margin(2, 2, 2, 2))
+        my_theme()
+
 
       p2 <- ggplot(d_list$graph0,
                    aes(x    = year,
@@ -323,14 +310,8 @@ output$main_plot <- renderPlot({
           title = paste("Number of poor by", input$group_var1),
           y = "Millions of poor",
           x = "") +
-        theme_minimal() +
-        theme(
-          legend.position  = "bottom",
-          legend.text      = element_text(size = 8),
-          legend.title     = element_blank(),
-          legend.key.size  = unit(0.3, "cm"),
-          legend.spacing.x = unit(0.1, "cm"),
-          plot.margin      = margin(2, 2, 2, 2))
+        my_theme()
+
 
       p1 + p2
     }
@@ -358,14 +339,8 @@ output$main_plot <- renderPlot({
           title = paste("Poverty rate by", input$group_var1),
           y     = "Poverty headcount, %",
           x     = "") +
-        theme_minimal() +
-        theme(
-          legend.position  = "bottom",
-          legend.text      = element_text(size = 8),
-          legend.title     = element_blank(),
-          legend.key.size  = unit(0.3, "cm"),
-          legend.spacing.x = unit(0.1, "cm"),
-          plot.margin      = margin(2, 2, 2, 2))
+        my_theme()
+
 
       p2 <- ggplot(d_list$graph2,
                    aes(x     = year,
@@ -376,14 +351,7 @@ output$main_plot <- renderPlot({
           title = paste("Poverty rate by", input$group_var2),
           y     = "Poverty headcount, %",
           x     = "") +
-        theme_minimal() +
-        theme(
-          legend.position  = "bottom",
-          legend.text      = element_text(size = 8),
-          legend.title     = element_blank(),
-          legend.key.size  = unit(0.3, "cm"),
-          legend.spacing.x = unit(0.1, "cm"),
-          plot.margin      = margin(2, 2, 2, 2))
+        my_theme()
 
       p1 + p2
     }
