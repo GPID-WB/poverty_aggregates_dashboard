@@ -64,7 +64,11 @@ output$dynamic_sidebar <- renderUI({
       radioButtons("selected_line",
                    "Select Poverty Line",
                    choices  = povertylines,
-                   selected = povertylines[1])
+                   selected = povertylines[1]),
+      tags$hr(),
+      downloadButton("download_filtered_csv",  "Download CSV",         class = "btn-sm"),
+      downloadButton("download_filtered_dta",  "Download Stata (.dta)", class = "btn-sm"),
+      downloadButton("download_filtered_excel","Download Excel (.xlsx)",class = "btn-sm")
     )
   }
 
@@ -97,7 +101,11 @@ output$dynamic_sidebar <- renderUI({
       radioButtons("selected_line",
                    "Select Poverty Line",
                    choices  = povertylines,
-                   selected = povertylines[1])
+                   selected = povertylines[1]),
+      tags$hr(),
+      downloadButton("download_filtered_csv",  "Download CSV",         class = "btn-sm"),
+      downloadButton("download_filtered_dta",  "Download Stata (.dta)", class = "btn-sm"),
+      downloadButton("download_filtered_excel","Download Excel (.xlsx)",class = "btn-sm")
     )
   }
 })
@@ -197,19 +205,23 @@ filtered_data <- reactive({
 
 output$download_filtered <- downloadHandler(
   filename = function() {
-    paste0("filtered_data_", Sys.Date(), ".csv")
+    paste0("filtered_data_", 
+           Sys.Date(), 
+           ".csv")
   },
   content = function(file) {
-    write_csv(filtered_data(), file)
+    write.csv(filtered_data()$graph0, file)
   }
 )
 
 output$download_filtered_csv <- downloadHandler(
   filename = function() {
-    paste0("filtered_data_", Sys.Date(), ".csv")
+    paste0("filtered_data_", 
+           Sys.Date(), 
+           ".csv")
   },
   content = function(file) {
-    write_csv(filtered_data(), file)
+    write.csv(filtered_data()$graph0, file)
   }
 )
 
@@ -218,7 +230,7 @@ output$download_filtered_dta <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".dta")
   },
   content = function(file) {
-    write_dta(filtered_data(), file)
+    haven::write_dta(filtered_data()$graph0, file)
   }
 )
 
@@ -227,7 +239,7 @@ output$download_filtered_excel <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".xlsx")
   },
   content = function(file) {
-    write_xlsx(filtered_data(), file)
+    writexl::write_xlsx(filtered_data()$graph0, file)
   }
 )
 
@@ -239,16 +251,6 @@ Sidebar {.sidebar}
 ```{r}
 
 uiOutput("dynamic_sidebar")
-
-downloadButton("download_filtered_csv", 
-               "Download CSV", 
-               class = "btn-sm")
-downloadButton("download_filtered_dta",
-               "Download Stata (.dta)", 
-               class = "btn-sm")
-downloadButton("download_filtered_excel", 
-               "Download Excel (.xlsx)", 
-               class = "btn-sm")
 
 ```
 
