@@ -30,7 +30,12 @@ path_fst <- fs::path(here::here(), "data", "country_data.fst")
 country_data <-
   fst::read_fst(path          = path_fst, 
                 as.data.table = TRUE)
-          
+space_var <- function(cn) {
+  gsub(pattern = "_", replacement = " ", x = cn)
+}
+underscore_var <- function(cn) {
+  gsub(pattern = " ", replacement = "_", x = cn)
+}
 
 ```
 
@@ -44,14 +49,14 @@ output$dynamic_sidebar <- renderUI({
   if (tab == "Poverty headcount and the number of poor") {
     tagList(
       selectInput("group_var1", "Select the group to chart",
-                  choices = c("region_name",
-                              "region_old",
-                              "incgroup_historical",
-                              "incgroup_current",
-                              "fcv_historical",
-                              "fcv_current",
-                              "ida_historical",
-                              "ida_current")),
+                  choices = c("region name",
+                              "region old",
+                              "incgroup historical",
+                              "incgroup current",
+                              "fcv historical",
+                              "fcv current",
+                              "ida historical",
+                              "ida current")),
       uiOutput("group0_ui"),
 
       radioButtons("selected_line",
@@ -65,26 +70,26 @@ output$dynamic_sidebar <- renderUI({
     tagList(
       selectInput("group_var1",
                   "Select group for figure 1",
-                  choices = c("region_name",
-                              "region_old",
-                              "incgroup_historical",
-                              "incgroup_current",
-                              "fcv_historical",
-                              "fcv_current",
-                              "ida_historical",
-                              "ida_current")),
+                  choices = c("region name",
+                              "region old",
+                              "incgroup historical",
+                              "incgroup current",
+                              "fcv historical",
+                              "fcv current",
+                              "ida historical",
+                              "ida current")),
       uiOutput("group1_ui"),
 
       selectInput("group_var2",
                   "Select group for figure 2",
-                  choices = c("region_name",
-                              "region_old",
-                              "incgroup_historical",
-                              "incgroup_current",
-                              "fcv_historical",
-                              "fcv_current",
-                              "ida_historical",
-                              "ida_current")),
+                  choices = c("region name",
+                              "region old",
+                              "incgroup historical",
+                              "incgroup current",
+                              "fcv historical",
+                              "fcv current",
+                              "ida historical",
+                              "ida current")),
       uiOutput("group2_ui"),
 
       radioButtons("selected_line",
@@ -101,6 +106,7 @@ output$dynamic_sidebar <- renderUI({
 ```{r output-groupui}
 # Small helper to build sorted unique choices fast
 group_choices <- function(var) {
+  var  <- underscore_var(var)
   vals <- country_data[[var]]
   vals <- vals[!is.na(vals)]
   sort(funique(vals))
@@ -145,6 +151,10 @@ output$group2_ui <- renderUI({
 filtered_data <- reactive({
   tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
   req(input$group_var1, input$selected_line)
+  
+  # make underscore
+  gv1 <- underscore_var(input$group_var1)
+  gv2 <- underscore_var(input$group_var2)
 
   dt <- country_data[poverty_line == as.numeric(input$selected_line)]
 
@@ -155,27 +165,27 @@ filtered_data <- reactive({
 
   # ---- d0: number of poor (always available; used on first tab)
   d0 <- dt[
-    get(input$group_var1) %in% sel_g1,
+    get(gv1) %in% sel_g1,
     .(pop_in_pov = sum(pop_in_pov, na.rm = TRUE)),
-    by = c("year", input$group_var1)
+    by = c("year", gv1)
   ]
 
   # ---- d1: poverty rate by group_var1 (used on both tabs)
   d1 <- dt[
-    get(input$group_var1) %in% sel_g1,
+    get(gv1) %in% sel_g1,
     .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
-    by = c("year", input$group_var1)
+    by = c("year", gv1)
   ]
 
   # ---- d2: only needed on Comparison; otherwise return empty DT
   if (tab == "Comparison") {
     req(input$group_var2)
     sel_g2 <- input$group2_values
-    if (is.null(sel_g2)) sel_g2 <- unique(dt[[input$group_var2]])
+    if (is.null(sel_g2)) sel_g2 <- unique(dt[[gv2]])
     d2 <- dt[
-      get(input$group_var2) %in% sel_g2,
+      get(gv2) %in% sel_g2,
       .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
-      by = c("year", input$group_var2)
+      by = c("year", gv2)
     ]
   } else {
     d2 <- data.table()
@@ -289,7 +299,7 @@ output$main_plot <- renderPlot({
       p1 <- ggplot(d_list$graph1,
                    aes(x     = year,
                        y     = headcount * 100,
-                       color = .data[[input$group_var1]])) +
+                       color = .data[[underscore_var(input$group_var1)]])) +
         geom_line(linewidth = 1) +
         labs(
           title = paste("Poverty rate by", input$group_var1),
@@ -307,7 +317,7 @@ output$main_plot <- renderPlot({
       p2 <- ggplot(d_list$graph0,
                    aes(x    = year,
                        y    = pop_in_pov/1e6,
-                       fill = .data[[input$group_var1]])) +
+                       fill = .data[[underscore_var(input$group_var1)]])) +
         geom_area(alpha = 0.8) +
         labs(
           title = paste("Number of poor by", input$group_var1),
@@ -342,7 +352,7 @@ output$main_plot <- renderPlot({
       p1 <- ggplot(d_list$graph1,
                    aes(x     = year,
                        y     = headcount * 100,
-                       color = .data[[input$group_var1]])) +
+                       color = .data[[underscore_var(input$group_var1)]])) +
         geom_line(linewidth = 1) +
         labs(
           title = paste("Poverty rate by", input$group_var1),
@@ -360,7 +370,7 @@ output$main_plot <- renderPlot({
       p2 <- ggplot(d_list$graph2,
                    aes(x     = year,
                        y     = headcount * 100,
-                       color = .data[[input$group_var2]])) +
+                       color = .data[[underscore_var(input$group_var2)]])) +
         geom_line(linewidth = 1) +
         labs(
           title = paste("Poverty rate by", input$group_var2),
