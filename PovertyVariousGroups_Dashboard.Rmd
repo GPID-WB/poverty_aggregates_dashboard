@@ -28,11 +28,11 @@ library(patchwork)
 
 ```{r load-init}
 povertylines <- c(3.00, 4.20, 8.30)
-path_fst <- fs::path(here::here(), "data", "country_data.fst")
+path_fst <- fs::path(here::here(), "country_data.fst")
 country_data <-
   fst::read_fst(path          = path_fst, 
                 as.data.table = TRUE)
-source(file = fs::path(here::here(), "R", "utils.R"))
+source(file = fs::path(here::here(), "utils.R"))
 group_choices <- function(var) {
     var  <- underscore_var(var)
     vals <- country_data[[var]]
