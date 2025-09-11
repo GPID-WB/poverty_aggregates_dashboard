@@ -21,41 +21,68 @@ underscore_var <- function(cn) {
 }
 
 
-# my_theme <- function(base_size = 11, legend = c("bottom", "none", "right")) {
-#     legend <- match.arg(legend)
-#     theme_minimal(base_size = base_size) +
-#         theme(
-#             legend.position  = legend,
-#             legend.title     = element_blank(),
-#             legend.text      = element_text(size = 8),
-#             legend.key.size  = unit(0.3, "cm"),
-#             legend.spacing.x = unit(0.1, "cm"),
-#             plot.margin      = margin(2, 2, 2, 2)
-#         )
-# }
 
-
-# WBG Theme using wbplot()
-
-my_theme <- function(base_size = 11, legend = "bottom") {
+my_theme <- function(by,
+                     base_size   = 5,
+                     legend      = c("bottom", "top", "left", "right", "none"),
+                     drop        = FALSE,
+                     legend_nrow = 2) {
     legend <- match.arg(legend)
-    wbplot::theme_wb() +
+
+    # Map `by` to region / income / other
+    gv <- tryCatch(underscore_var(by), error = function(e) by)
+    group <- if (gv %chin% c("incgroup_historical", "incgroup_current", "income")) {
+        "income"
+    } else if (gv %chin% c("region_name", "region_old", "region")) {
+        "region"
+    } else {
+        "other"
+    }
+
+    parts <- list(
+        theme_wb(chartType     = "line",
+                 addYAxisTitle = TRUE),
         theme(
+            text              = element_text(size = base_size),
             legend.position   = legend,
             legend.title      = element_blank(),
-            legend.text       = element_text(size = 8),
+            legend.text       = element_text(size = 2.9),
             legend.key.size   = unit(0.5, "cm"),
             legend.key.width  = unit(0.5, "cm"),
-            legend.spacing.x     = unit(1, "mm"),     # tighter horizontal spacing
-            legend.spacing.y     = unit(1, "mm"),      # vertical between rows
+            legend.spacing.x  = unit(1, "mm"),
+            legend.spacing.y  = unit(1, "mm"),
             legend.margin     = margin(0.1, 0.1, 0.1, 0.1, "cm"),
             plot.margin       = margin(1, 1, 1, 1, "cm"),
             panel.background  = element_blank(),
             plot.background   = element_blank(),
             panel.grid.major  = element_line(color = "#E6E6E6", linewidth = 0.25),
             panel.grid.minor  = element_blank()
+        ),
+        scale_color_wb_d(),
+        scale_fill_wb_d(),
+        guides(
+            color = guide_legend(nrow = legend_nrow, byrow = TRUE),
+            fill  = guide_legend(nrow = legend_nrow, byrow = TRUE)
         )
+    )
+
+    # Override with manual palettes for region / income
+    if (group == "region") {
+        parts <- c(parts, list(
+            scale_region_color_manual(drop = drop),
+            scale_region_fill_manual(drop = drop)
+        ))
+    } else if (group == "income") {
+        parts <- c(parts, list(
+            scale_income_color_manual(drop = drop),
+            scale_income_fill_manual(drop = drop)
+        ))
+    }
+
+    parts
 }
+
+
 
 
 # Color palette set up
@@ -98,28 +125,6 @@ scale_income_color_manual <- function(drop = FALSE) {
 
 scale_income_fill_manual <- function(drop = FALSE) {
     scale_fill_manual(values = wb_income_colors(), drop = drop)
-}
-
-
-# 3) Auto-switch helper based on group_var
-add_group_palette <- function(aesthetic = c("color", "fill"), group_var) {
-    aesthetic <- match.arg(aesthetic)
-    gv <- underscore_var(group_var)
-
-    if (gv %in% c("region_name", "region_old")) {
-        if (aesthetic == "color") scale_region_color_manual()
-        else                      scale_region_fill_manual()
-    }
-
-    else if (gv %in% c("incgroup_historical", "incgroup_current")) {
-        if (aesthetic == "color") scale_income_color_manual()
-        else                      scale_income_fill_manual()
-    }
-
-    else {
-        if (aesthetic == "color") wbplot::scale_color_wb_d()
-        else                      wbplot::scale_fill_wb_d()
-    }
 }
 
 

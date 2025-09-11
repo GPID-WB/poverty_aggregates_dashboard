@@ -20,6 +20,7 @@ library(fastverse)
 library(ggplot2)
 library(shiny)
 library(patchwork)
+library(wbplot)
 ```
 
 
@@ -299,10 +300,7 @@ output$main_plot <- renderPlot({
           title = paste("Poverty rate by", input$group_var1),
           y     = "Poverty headcount, %",
           x     = "") +
-        my_theme() + 
-          scale_color_wb_d() + 
-          guides(color = guide_legend(nrow = 2, byrow = TRUE)) + 
-          add_group_palette("color", input$group_var1)
+        my_theme(by = input$group_var1)
 
 
       p2 <- ggplot(d_list$graph0,
@@ -314,10 +312,7 @@ output$main_plot <- renderPlot({
           title = paste("Number of poor by", input$group_var1),
           y = "Millions of poor",
           x = "") +
-        my_theme() +
-          scale_fill_wb_d() + 
-          guides(fill = guide_legend(nrow = 2, byrow = TRUE)) + 
-          add_group_palette("fill",  input$group_var1)
+        my_theme(by = input$group_var1)
 
 
       p1 + p2
@@ -325,7 +320,7 @@ output$main_plot <- renderPlot({
   } else if (input$active_tab == "Comparison") {
 
 
-    if (nrow(d_list$graph1) == 0 & nrow(d_list$graph2) == 0) {
+    if (fnrow(d_list$graph1) == 0 & fnrow(d_list$graph2) == 0) {
       ggplot() +
         annotate("text",
                  x     = 1,
@@ -346,10 +341,7 @@ output$main_plot <- renderPlot({
           title = paste("Poverty rate by", input$group_var1),
           y     = "Poverty headcount, %",
           x     = "") +
-        my_theme() +
-          scale_color_wb_d() + 
-          guides(color = guide_legend(nrow = 2, byrow = TRUE)) + 
-          add_group_palette("color", input$group_var1)
+        my_theme(by = input$group_var1) 
 
 
       p2 <- ggplot(d_list$graph2,
@@ -361,10 +353,7 @@ output$main_plot <- renderPlot({
           title = paste("Poverty rate by", input$group_var2),
           y     = "Poverty headcount, %",
           x     = "") +
-        my_theme() +
-          scale_color_wb_d() + 
-          guides(color = guide_legend(nrow = 2, byrow = TRUE)) + 
-          add_group_palette("color", input$group_var1)
+        my_theme(by = input$group_var2) 
 
       p1 + p2
     }
