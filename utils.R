@@ -85,19 +85,19 @@ wb_income_colors <- function() {
 
 # 2) Set up manual scale functions for use in plots
 scale_region_color_manual <- function(drop = FALSE) {
-    ggplot2::scale_color_manual(values = wb_region_colors(), drop = drop)
+    scale_color_manual(values = wb_region_colors(), drop = drop)
 }
 
 scale_region_fill_manual <- function(drop = FALSE) {
-    ggplot2::scale_fill_manual(values = wb_region_colors(), drop = drop)
+    scale_fill_manual(values = wb_region_colors(), drop = drop)
 }
 
 scale_income_color_manual <- function(drop = FALSE) {
-    ggplot2::scale_color_manual(values = wb_income_colors(), drop = drop)
+    scale_color_manual(values = wb_income_colors(), drop = drop)
 }
 
 scale_income_fill_manual <- function(drop = FALSE) {
-    ggplot2::scale_fill_manual(values = wb_income_colors(), drop = drop)
+    scale_fill_manual(values = wb_income_colors(), drop = drop)
 }
 
 
