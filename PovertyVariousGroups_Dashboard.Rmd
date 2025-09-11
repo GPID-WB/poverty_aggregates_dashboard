@@ -19,9 +19,7 @@ output:
 library(fastverse)
 library(ggplot2)
 library(shiny)
-library(writexl)
 library(patchwork)
-library(wbplot)
 ```
 
 
