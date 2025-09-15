@@ -16,8 +16,24 @@ space_var <- function(cn) {
 #' @examples
 #' underscore_var(c("region name", "fcv current"))
 #' @export
+
+# underscore_var <- function(cn) {
+#     gsub(pattern = " ", replacement = "_", x = cn)
+# }
+
 underscore_var <- function(cn) {
-    gsub(pattern = " ", replacement = "_", x = cn)
+    if (is.null(cn)) return(NULL)
+
+    dplyr::recode(cn,
+                  "Region (new WB classification)" = "region_name",
+                  "Region (old PovcalNet classification)"     = "region_old",
+                  "Income group (historical)" = "incgroup_historical",
+                  "Income group (latest)"    = "incgroup_current",
+                  "FCV (historical)"      = "fcv_historical",
+                  "FCV (latest)"         = "fcv_current",
+                  "IDA (historical)"      = "ida_historical",
+                  "IDA (latest)"         = "ida_current",
+                  .default = gsub(" ", "_", cn))
 }
 
 
