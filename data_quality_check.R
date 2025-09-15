@@ -84,14 +84,14 @@ summary_table
 library(gt)
 
 summary_gt <- summary_table |>
-    gt() |>
-    fmt_number(columns = "Share Equal (%)", decimals = 2) |>
-    cols_label(
-        `Group Pair`                 = "Group Pair",
-        `Share Equal (%)`            = "Share Equal (%)",
-        `Max Unique (B per A)`       = "Max Unique (B per A)",
-        `Max Unique (A per B)`       = "Max Unique (A per B)",
-        `Any Aggregation Difference` = "Any Aggregation Difference"
-    )
+  gt() |>
+  fmt_number(columns = "Share Equal (%)", decimals = 2) |>
+  cols_label(
+    `Group Pair`                 = "Group Pair",
+    `Share Equal (%)`            = "Share Equal (%)",
+    `Max Unique (B per A)`       = "Max Unique (B per A)",
+    `Max Unique (A per B)`       = "Max Unique (A per B)",
+    `Any Aggregation Difference` = "Any Aggregation Difference"
+  )
 
 summary_gt

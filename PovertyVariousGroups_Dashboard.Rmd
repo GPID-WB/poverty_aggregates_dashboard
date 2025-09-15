@@ -205,23 +205,49 @@ filtered_data <- reactive({
 
 output$download_filtered <- downloadHandler(
   filename = function() {
-    paste0("filtered_data_", 
-           Sys.Date(), 
-           ".csv")
+    paste0("filtered_data_", Sys.Date(), ".csv")
   },
   content = function(file) {
-    write.csv(filtered_data()$graph0, file)
+    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+    data <- if (tab == "Poverty headcount and the number of poor") {
+      d1 <- filtered_data()$graph1
+      d0 <- filtered_data()$graph0
+      gv <- underscore_var(input$group_var1)
+      merge(d1, d0, by = c("year", gv), all = TRUE)
+    } else {
+      d1  <- filtered_data()$graph1
+      d2  <- filtered_data()$graph2
+      gv1 <- underscore_var(input$group_var1)
+      gv2 <- underscore_var(input$group_var2)
+      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      data.table::rbindlist(list(d1, d2), fill = TRUE)
+    }
+    write.csv(data, file, row.names = FALSE)
   }
 )
 
 output$download_filtered_csv <- downloadHandler(
   filename = function() {
-    paste0("filtered_data_", 
-           Sys.Date(), 
-           ".csv")
+    paste0("filtered_data_", Sys.Date(), ".csv")
   },
   content = function(file) {
-    write.csv(filtered_data()$graph0, file)
+    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+    data <- if (tab == "Poverty headcount and the number of poor") {
+      d1 <- filtered_data()$graph1
+      d0 <- filtered_data()$graph0
+      gv <- underscore_var(input$group_var1)
+      merge(d1, d0, by = c("year", gv), all = TRUE)
+    } else {
+      d1  <- filtered_data()$graph1
+      d2  <- filtered_data()$graph2
+      gv1 <- underscore_var(input$group_var1)
+      gv2 <- underscore_var(input$group_var2)
+      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      data.table::rbindlist(list(d1, d2), fill = TRUE)
+    }
+    write.csv(data, file, row.names = FALSE)
   }
 )
 
@@ -230,7 +256,22 @@ output$download_filtered_dta <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".dta")
   },
   content = function(file) {
-    haven::write_dta(filtered_data()$graph0, file)
+    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+    data <- if (tab == "Poverty headcount and the number of poor") {
+      d1 <- filtered_data()$graph1
+      d0 <- filtered_data()$graph0
+      gv <- underscore_var(input$group_var1)
+      merge(d1, d0, by = c("year", gv), all = TRUE)
+    } else {
+      d1  <- filtered_data()$graph1
+      d2  <- filtered_data()$graph2
+      gv1 <- underscore_var(input$group_var1)
+      gv2 <- underscore_var(input$group_var2)
+      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      data.table::rbindlist(list(d1, d2), fill = TRUE)
+    }
+    haven::write_dta(as.data.frame(data), file)
   }
 )
 
@@ -239,9 +280,137 @@ output$download_filtered_excel <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".xlsx")
   },
   content = function(file) {
-    writexl::write_xlsx(filtered_data()$graph0, file)
+    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+    data <- if (tab == "Poverty headcount and the number of poor") {
+      d1 <- filtered_data()$graph1
+      d0 <- filtered_data()$graph0
+      gv <- underscore_var(input$group_var1)
+      merge(d1, d0, by = c("year", gv), all = TRUE)
+    } else {
+      d1  <- filtered_data()$graph1
+      d2  <- filtered_data()$graph2
+      gv1 <- underscore_var(input$group_var1)
+      gv2 <- underscore_var(input$group_var2)
+      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      data.table::rbindlist(list(d1, d2), fill = TRUE)
+    }
+    writexl::write_xlsx(as.data.frame(data), file)
   }
 )
+
+
+# output$download_filtered <- downloadHandler(
+#   filename = function() {
+#     paste0("filtered_data_", Sys.Date(), ".csv")
+#   },
+#   content = function(file) {
+#     tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+#     data <- if (tab == "Poverty headcount and the number of poor") {
+#       d1 <- filtered_data()$graph1
+#       d0 <- filtered_data()$graph0
+#       gv <- underscore_var(input$group_var1)
+#       merge(d1, d0, by = c("year", gv), all = TRUE)
+#     } else {
+#       filtered_data()$graph0
+#     }
+#     write.csv(data, file, row.names = FALSE)
+#   }
+# )
+# 
+# output$download_filtered_csv <- downloadHandler(
+#   filename = function() {
+#     paste0("filtered_data_", Sys.Date(), ".csv")
+#   },
+#   content = function(file) {
+#     tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+#     data <- if (tab == "Poverty headcount and the number of poor") {
+#       d1 <- filtered_data()$graph1
+#       d0 <- filtered_data()$graph0
+#       gv <- underscore_var(input$group_var1)
+#       merge(d1, d0, by = c("year", gv), all = TRUE)
+#     } else {
+#       filtered_data()$graph0
+#     }
+#     write.csv(data, file, row.names = FALSE)
+#   }
+# )
+# 
+# output$download_filtered_dta <- downloadHandler(
+#   filename = function() {
+#     paste0("filtered_data_", Sys.Date(), ".dta")
+#   },
+#   content = function(file) {
+#     tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+#     data <- if (tab == "Poverty headcount and the number of poor") {
+#       d1 <- filtered_data()$graph1
+#       d0 <- filtered_data()$graph0
+#       gv <- underscore_var(input$group_var1)
+#       merge(d1, d0, by = c("year", gv), all = TRUE)
+#     } else {
+#       filtered_data()$graph0
+#     }
+#     haven::write_dta(as.data.frame(data), file)
+#   }
+# )
+# 
+# output$download_filtered_excel <- downloadHandler(
+#   filename = function() {
+#     paste0("filtered_data_", Sys.Date(), ".xlsx")
+#   },
+#   content = function(file) {
+#     tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+#     data <- if (tab == "Poverty headcount and the number of poor") {
+#       d1 <- filtered_data()$graph1
+#       d0 <- filtered_data()$graph0
+#       gv <- underscore_var(input$group_var1)
+#       merge(d1, d0, by = c("year", gv), all = TRUE)
+#     } else {
+#       filtered_data()$graph0
+#     }
+#     writexl::write_xlsx(as.data.frame(data), file)
+#   }
+# )
+
+# output$download_filtered <- downloadHandler(
+#   filename = function() {
+#     paste0("filtered_data_", 
+#            Sys.Date(), 
+#            ".csv")
+#   },
+#   content = function(file) {
+#     write.csv(filtered_data()$graph0, file)
+#   }
+# )
+# 
+# output$download_filtered_csv <- downloadHandler(
+#   filename = function() {
+#     paste0("filtered_data_", 
+#            Sys.Date(), 
+#            ".csv")
+#   },
+#   content = function(file) {
+#     write.csv(filtered_data()$graph0, file)
+#   }
+# )
+# 
+# output$download_filtered_dta <- downloadHandler(
+#   filename = function() {
+#     paste0("filtered_data_", Sys.Date(), ".dta")
+#   },
+#   content = function(file) {
+#     haven::write_dta(filtered_data()$graph0, file)
+#   }
+# )
+# 
+# output$download_filtered_excel <- downloadHandler(
+#   filename = function() {
+#     paste0("filtered_data_", Sys.Date(), ".xlsx")
+#   },
+#   content = function(file) {
+#     writexl::write_xlsx(filtered_data()$graph0, file)
+#   }
+# )
 
 ```
 
