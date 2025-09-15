@@ -99,7 +99,7 @@ output$dynamic_sidebar <- renderUI({
       uiOutput("group2_ui"),
 
       radioButtons("selected_line",
-                   "Select Poverty Line",
+                   "Select Poverty Line (2021 PPP)",
                    choices  = povertylines,
                    selected = povertylines[1]),
       tags$hr(),
@@ -315,6 +315,47 @@ uiOutput("dynamic_sidebar")
 Column
 -----------------------------------------------------------------------
 ```{r}
+
+### Dashboard Description
+HTML("
+  <div style='margin-bottom: 15px; font-size: 14px; line-height: 1.6; max-width: 1000px;'>
+    <p>
+      This dashboard presents poverty statistics for various groups that are not currently reported on the 
+      <em>World Bank’s Poverty and Inequality Platform (PIP)</em>, but are often used in reports and analyses. 
+      It uses the latest vintage of PIP data (September 2025) and applies the <strong>2021 PPPs</strong>.
+    </p>
+
+    <p>
+      It presents poverty indicators—<strong>poverty rate</strong> and <strong>millions of poor people</strong>—
+      at the three global poverty lines used by the World Bank: <strong>$3.00</strong>, <strong>$4.20</strong>, and <strong>$8.30</strong>. 
+      Four types of groupings are included: (i) geographic regions, (ii) World Bank income groups, 
+      (iii) World Bank fragility classification (FCV), and (iv) IDA eligibility status.
+    </p>
+
+    <p>
+      With the September 2025 PIP update, PIP’s geographical regions were aligned with the 
+      <em>World Bank’s official regional classification</em>. Prior to this, PIP used its own regional definition 
+      that excluded some high-income economies from regional aggregates, placing them into a separate group 
+      called “Other High Income.” This grouping no longer appears, and a new region—<strong>North America</strong>—now exists.
+    </p>
+
+    <p>
+      Users should note that the World Bank has recently reclassified <strong>Afghanistan</strong> and <strong>Pakistan</strong> 
+      from the <em>South Asia</em> region to <em>Middle East & North Africa</em>. As a result of these and other changes, 
+      <strong>Sub-Saharan Africa</strong> is the only region whose composition remains unchanged. This dashboard allows users 
+      to compare regional aggregates using both the <strong>new</strong> and <strong>old</strong> regional definitions, 
+      while keeping the data vintage constant.
+    </p>
+
+    <p>
+      For income group, FCV, and IDA status, the dashboard presents two types of aggregates:
+      <strong>latest classification</strong> (where each country is grouped based on its most recent fiscal year category, held constant over time),
+      and <strong>historical classification</strong> (where groupings change year-to-year based on past classifications). 
+      The historical series may exhibit more volatility due to these reclassifications over time.
+    </p>
+  </div>
+")
+
 tabsetPanel(
   id   = "active_tab",
   type = "tabs",
