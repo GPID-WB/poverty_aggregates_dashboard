@@ -335,7 +335,7 @@ uiOutput("dynamic_sidebar")
 
 ### Dashboard Description
 HTML("
-  <div style='margin-bottom: 15px; font-size: 14px; line-height: 1.6; max-width: 1000px;'>
+  <div style='margin-bottom: 15px; font-size: 14px; line-height: 1.6; max-width: 100%;'>
     <p>
       This dashboard presents poverty statistics for various groups that are not currently reported on the 
       <em>World Bank’s Poverty and Inequality Platform (PIP)</em>, but are often used in reports and analyses. 
