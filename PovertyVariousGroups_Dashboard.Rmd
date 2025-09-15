@@ -306,8 +306,8 @@ output$main_plot <- renderPlot({
       p2 <- ggplot(d_list$graph0,
                    aes(x    = year,
                        y    = pop_in_pov/1e6,
-                       fill = .data[[underscore_var(input$group_var1)]])) +
-        geom_area(alpha = 0.8) +
+                       color = .data[[underscore_var(input$group_var1)]])) +
+        geom_line(linewidth = 1) +
         labs(
           title = paste("Number of poor by", input$group_var1),
           y = "Millions of poor",
