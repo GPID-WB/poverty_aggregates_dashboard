@@ -5,8 +5,8 @@ account: zprinsloo
 server: datanalytics-int.worldbank.org
 hostUrl: https://datanalytics-int.worldbank.org/__api__
 appId: 1028
-bundleId: 2991
-url: https://datanalytics-int.worldbank.org/content/9a51d782-f73b-4736-8916-b3af7ac8e010/
+bundleId: 3023
+url: https://datanalytics-int.worldbank.org/poverty_various_groups/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
