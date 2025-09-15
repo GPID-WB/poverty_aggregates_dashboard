@@ -62,7 +62,7 @@ output$dynamic_sidebar <- renderUI({
       uiOutput("group0_ui"),
 
       radioButtons("selected_line",
-                   "Select Poverty Line",
+                   "Select Poverty Line (2021 PPP)",
                    choices  = povertylines,
                    selected = povertylines[1]),
       tags$hr(),
