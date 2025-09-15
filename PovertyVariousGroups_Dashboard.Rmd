@@ -7,6 +7,7 @@ output:
     vertical_layout: fill
 ---
 
+```{=html}
 <style>
 /* Change flexdashboard top bar color */
 .navbar.navbar-inverse {
@@ -14,7 +15,7 @@ output:
   border-color: #044368 !important;
 }
 </style>
-
+```
 ```{r setup, include=FALSE}
 library(fastverse)
 library(ggplot2)
@@ -22,9 +23,6 @@ library(shiny)
 library(patchwork)
 library(wbplot)
 ```
-
-
-
 
 ```{r load-init}
 povertylines <- c(3.00, 4.20, 8.30)
@@ -40,8 +38,6 @@ group_choices <- function(var) {
     sort(funique(vals))
 }
 ```
-
-
 
 ```{r sidebar}
 output$dynamic_sidebar <- renderUI({
@@ -68,7 +64,8 @@ output$dynamic_sidebar <- renderUI({
       tags$hr(),
       downloadButton("download_filtered_csv",  "Download CSV",         class = "btn-sm"),
       downloadButton("download_filtered_dta",  "Download Stata (.dta)", class = "btn-sm"),
-      downloadButton("download_filtered_excel","Download Excel (.xlsx)",class = "btn-sm")
+      downloadButton("download_filtered_excel","Download Excel (.xlsx)",class = "btn-sm"),
+      downloadButton("download_plot", "Download Figure (.jpeg)", class = "btn-sm")
     )
   }
 
@@ -105,13 +102,13 @@ output$dynamic_sidebar <- renderUI({
       tags$hr(),
       downloadButton("download_filtered_csv",  "Download CSV",         class = "btn-sm"),
       downloadButton("download_filtered_dta",  "Download Stata (.dta)", class = "btn-sm"),
-      downloadButton("download_filtered_excel","Download Excel (.xlsx)",class = "btn-sm")
+      downloadButton("download_filtered_excel","Download Excel (.xlsx)",class = "btn-sm"),
+      downloadButton("download_plot", "Download Figure (.jpeg)", class = "btn-sm")
     )
   }
 })
 
 ```
-
 
 ```{r output-groupui}
 # Tab 1
@@ -145,7 +142,6 @@ output$group2_ui <- renderUI({
 })
 
 ```
-
 
 ```{r filtered-data}
 # ---- filtered data for figures ----
@@ -198,7 +194,6 @@ filtered_data <- reactive({
 
 
 ```
-
 
 ```{r}
 ### Download files ###
@@ -299,21 +294,34 @@ output$download_filtered_excel <- downloadHandler(
   }
 )
 
+output$download_plot <- downloadHandler(
+  filename = function() paste0("poverty_charts_", Sys.Date(), ".jpeg"),
+  content = function(file) {
+    p <- last_plot()
+    if (is.null(p)) stop("Please generate the plot before downloading.")
+    ggplot2::ggsave(filename = file,
+                    plot     = p,
+                    width    = 10,
+                    height   = 5,
+                    units    = "in",
+                    dpi      = 300,
+                    device   = "jpeg")
+  }
+)
+
 
 ```
 
+## Sidebar {.sidebar}
 
-Sidebar {.sidebar}
------------------------------------------------------------------------
 ```{r}
 
 uiOutput("dynamic_sidebar")
 
 ```
 
+## Column
 
-Column
------------------------------------------------------------------------
 ```{r}
 
 ### Dashboard Description
@@ -366,7 +374,6 @@ tabsetPanel(
 
 ```
 
-
 ```{r plot-output-mainplot}
 plotOutput("main_plot")
 
@@ -377,6 +384,9 @@ div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555
 ```
 
 ```{r main-plot-construct}
+
+last_plot <- reactiveVal(NULL)
+
 output$main_plot <- renderPlot({
 
   d_list <- filtered_data()
@@ -418,8 +428,11 @@ output$main_plot <- renderPlot({
           x = "") +
         my_theme(by = input$group_var1)
 
-
-      p1 + p2
+      p <- p1 + p2
+      last_plot(p)
+      return(p)
+      
+      
     }
   } else if (input$active_tab == "Comparison") {
 
@@ -459,7 +472,9 @@ output$main_plot <- renderPlot({
           x     = "") +
         my_theme(by = input$group_var2) 
 
-      p1 + p2
+      p <- p1 + p2
+      last_plot(p)
+      return(p)
     }
   }
 })
@@ -467,6 +482,3 @@ output$main_plot <- renderPlot({
 
 
 ```
-
-
-
