@@ -1,8 +1,13 @@
 ### GET THE NECESSARY DATA ###
 
+
+rm(list = ls())
+
 library(tidyverse)
 library(pipr)
 library(haven)
+library(fst)
+library(fs)
 
 # Definitions
 povertylines <- c(3.00, 4.20, 8.30)
@@ -40,10 +45,12 @@ country_data <- purrr::map_df(
     rename(iso3c = country_code) %>%
     left_join(class_data, by = "iso3c") %>%
     left_join(reg_old, by = "iso3c") %>%
-    select(region_name, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
-    mutate(pop_in_pov = headcount * pop)
+    select(region, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
+    mutate(pop_in_pov = headcount * pop) %>%
+    rename(region_name = region)
 
 # write
+fs::dir_create("data")
+
 fst::write_fst(x    = country_data,
-               path = fs::path("data",
-                               "country_data.fst"))
+               path = fs::path("country_data.fst"))

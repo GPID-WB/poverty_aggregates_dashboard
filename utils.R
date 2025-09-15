@@ -110,6 +110,7 @@ wb_region_colors <- function() {
         "Europe & Central Asia"         = "#AA0000",
         "Latin America & Caribbean"     = "#0C7C68",
         "Middle East & North Africa"    = "#664AB6",
+        "Middle East, North Africa, Afghanistan & Pakistan" = "#664AB6",
         "Other High Income Countries"   = "#34A7F2",
         "South Asia"                    = "#4EC2C0",
         "Sub-Saharan Africa"            = "#FF9800"
