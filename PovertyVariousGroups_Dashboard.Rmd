@@ -363,11 +363,17 @@ tabsetPanel(
   tabPanel("Comparison")
 )
 
+
 ```
 
 
 ```{r plot-output-mainplot}
 plotOutput("main_plot")
+
+div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
+    "Source: Poverty and Inequality Platform (September 2025)"
+)
+
 ```
 
 ```{r main-plot-construct}
