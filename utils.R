@@ -42,7 +42,7 @@ my_theme <- function(by,
                      base_size   = 5,
                      legend      = c("bottom", "top", "left", "right", "none"),
                      drop        = FALSE,
-                     legend_nrow = 2) {
+                     legend_nrow = 3) {
     legend <- match.arg(legend)
 
     # Map `by` to region / income / other
@@ -62,7 +62,7 @@ my_theme <- function(by,
             text              = element_text(size = base_size),
             legend.position   = legend,
             legend.title      = element_blank(),
-            legend.text       = element_text(size = 2.9),
+            legend.text       = element_text(size = 5),
             legend.key.size   = unit(0.5, "cm"),
             legend.key.width  = unit(0.5, "cm"),
             legend.spacing.x  = unit(1, "mm"),
@@ -143,6 +143,7 @@ scale_income_color_manual <- function(drop = FALSE) {
 scale_income_fill_manual <- function(drop = FALSE) {
     scale_fill_manual(values = wb_income_colors(), drop = drop)
 }
+
 
 
 

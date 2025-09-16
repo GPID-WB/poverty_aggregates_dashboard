@@ -1,5 +1,5 @@
 ---
-title: "Dashboard comparing poverty for various groups"
+title: "Aggregate Poverty Data Dashboard"
 runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
@@ -42,9 +42,11 @@ group_choices <- function(var) {
 ```{r sidebar}
 output$dynamic_sidebar <- renderUI({
   tab <- input$active_tab
-  if (is.null(tab)) tab <- "Poverty headcount and the number of poor"
-
-  if (tab == "Poverty headcount and the number of poor") {
+  if (is.null(tab)) tab <- "Poverty Headcount and the Number of Poor"
+  if (tab == "About") {
+    return(NULL)  # no controls on About
+      
+  } else if (tab == "Poverty Headcount and the Number of Poor") {
     tagList(
       selectInput("group_var1", "Select the group to chart",
                   choices = c("Region (new WB classification)",
@@ -69,7 +71,7 @@ output$dynamic_sidebar <- renderUI({
     )
   }
 
-  else if (tab == "Comparison") {
+  else if (tab == "Compare Groups (Side-by-Side)") {
     tagList(
       selectInput("group_var1",
                   "Select group for figure 1",
@@ -106,6 +108,48 @@ output$dynamic_sidebar <- renderUI({
       downloadButton("download_plot", "Download Figure (.jpeg)", class = "btn-sm")
     )
   }
+  
+  else if (tab == "Compare Groups (Overlay)") {
+  tagList(
+    # Selection A
+    selectInput("group_var1",
+                "Select grouping for Line A",
+                choices = c("Region (new WB classification)",
+                            "Region (old PovcalNet classification)",
+                            "Income group (historical)",
+                            "Income group (latest)",
+                            "FCV (historical)",
+                            "FCV (latest)",
+                            "IDA (historical)",
+                            "IDA (latest)")),
+    uiOutput("overlay1_value_ui"),
+
+    # Selection B
+    selectInput("group_var2",
+                "Select grouping for Line B",
+                choices = c("Region (new WB classification)",
+                            "Region (old PovcalNet classification)",
+                            "Income group (historical)",
+                            "Income group (latest)",
+                            "FCV (historical)",
+                            "FCV (latest)",
+                            "IDA (historical)",
+                            "IDA (latest)")),
+    uiOutput("overlay2_value_ui"),
+
+    # Poverty line + downloads
+    radioButtons("selected_line",
+                 "Select Poverty Line (2021 PPP)",
+                 choices  = povertylines,
+                 selected = povertylines[1]),
+    tags$hr(),
+    downloadButton("download_filtered_csv",   "Download CSV",          class = "btn-sm"),
+    downloadButton("download_filtered_dta",   "Download Stata (.dta)", class = "btn-sm"),
+    downloadButton("download_filtered_excel", "Download Excel (.xlsx)",class = "btn-sm"),
+    downloadButton("download_plot",           "Download Figure (.jpeg)", class = "btn-sm")
+  )
+}
+
 })
 
 ```
@@ -141,12 +185,35 @@ output$group2_ui <- renderUI({
                      selected = choices)
 })
 
+# Overlay - value for Line A (single choice)
+output$overlay1_value_ui <- renderUI({
+  req(input$group_var1)
+  choices <- group_choices(input$group_var1)
+  selectInput("overlay1_value",
+              "Choose one value for Line A",
+              choices = choices,
+              selected = choices[1],
+              multiple = FALSE)
+})
+
+# Overlay - value for Line B (single choice)
+output$overlay2_value_ui <- renderUI({
+  req(input$group_var2)
+  choices <- group_choices(input$group_var2)
+  selectInput("overlay2_value",
+              "Choose one value for Line B",
+              choices = choices,
+              selected = choices[1],
+              multiple = FALSE)
+})
+
+
 ```
 
 ```{r filtered-data}
 # ---- filtered data for figures ----
 filtered_data <- reactive({
-  tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+  tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
   req(input$group_var1, input$selected_line)
   
   # make underscore
@@ -156,8 +223,8 @@ filtered_data <- reactive({
   dt <- country_data[poverty_line == as.numeric(input$selected_line)]
 
   # ---- selections for group_var1
-  # On the first tab, use group0 checkboxes; on Comparison, use group1 checkboxes.
-  sel_g1 <- if (tab == "Comparison") input$group1_values else input$group0_values
+  # On the first tab, use group0 checkboxes; on Compare Groups (Side-by-Side), use group1 checkboxes.
+  sel_g1 <- if (tab == "Compare Groups (Side-by-Side)") input$group1_values else input$group0_values
   if (is.null(sel_g1)) sel_g1 <- unique(dt[[input$group_var1]])
 
   # ---- d0: number of poor (always available; used on first tab)
@@ -174,8 +241,8 @@ filtered_data <- reactive({
     by = c("year", gv1)
   ]
 
-  # ---- d2: only needed on Comparison; otherwise return empty DT
-  if (tab == "Comparison") {
+  # ---- d2: only needed on Compare Groups (Side-by-Side); otherwise return empty DT
+  if (tab == "Compare Groups (Side-by-Side)") {
     req(input$group_var2)
     sel_g2 <- input$group2_values
     if (is.null(sel_g2)) sel_g2 <- unique(dt[[gv2]])
@@ -188,9 +255,41 @@ filtered_data <- reactive({
     d2 <- data.table()
   }
 
+      # ---- ONLY for the new overlay tab: build two single lines and combine ----
+  if (tab == "Compare Groups (Overlay)") {
+    req(input$group_var2, input$overlay1_value, input$overlay2_value)
+
+    # Line A
+    dA <- dt[
+      get(gv1) == input$overlay1_value,
+      .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
+      by = .(year)
+    ][, `:=`(
+      group      = input$overlay1_value,
+      definition = input$group_var1,
+      line_label = "Line #1"     # ← change here
+    )]
+    
+    # Line B
+    dB <- dt[
+      get(gv2) == input$overlay2_value,
+      .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
+      by = .(year)
+    ][, `:=`(
+      group      = input$overlay2_value,
+      definition = input$group_var2,
+      line_label = "Line #2"     # ← and here
+    )]
+
+
+    overlay <- data.table::rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
+
+    return(list(graph0 = d0, graph1 = d1, graph2 = d2, graph_overlay = overlay))
+  }
+
+  # Default (all other tabs unchanged)
   list(graph0 = d0, graph1 = d1, graph2 = d2)
 })
-
 
 
 ```
@@ -203,13 +302,14 @@ output$download_filtered <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".csv")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
-    data <- if (tab == "Poverty headcount and the number of poor") {
+    tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
+    data <- if (tab == "Poverty Headcount and the Number of Poor") {
       d1 <- filtered_data()$graph1
       d0 <- filtered_data()$graph0
       gv <- underscore_var(input$group_var1)
       merge(d1, d0, by = c("year", gv), all = TRUE)
-    } else {
+      
+    } else if (tab == "Compare Groups (Side-by-Side)") {
       d1  <- filtered_data()$graph1
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
@@ -217,7 +317,10 @@ output$download_filtered <- downloadHandler(
       if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
       if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       data.table::rbindlist(list(d1, d2), fill = TRUE)
-    }
+    } else if (tab == "Compare Groups (Overlay)") {
+    ov <- filtered_data()$graph_overlay
+    data <- ov[, .(year, group, definition, headcount)]
+  }
     write.csv(data, file, row.names = FALSE)
   }
 )
@@ -227,13 +330,14 @@ output$download_filtered_csv <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".csv")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
-    data <- if (tab == "Poverty headcount and the number of poor") {
+    tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
+    data <- if (tab == "Poverty Headcount and the Number of Poor") {
       d1 <- filtered_data()$graph1
       d0 <- filtered_data()$graph0
       gv <- underscore_var(input$group_var1)
       merge(d1, d0, by = c("year", gv), all = TRUE)
-    } else {
+      
+    } else if (tab == "Compare Groups (Side-by-Side)"){
       d1  <- filtered_data()$graph1
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
@@ -241,7 +345,10 @@ output$download_filtered_csv <- downloadHandler(
       if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
       if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       data.table::rbindlist(list(d1, d2), fill = TRUE)
-    }
+    } else if (tab == "Compare Groups (Overlay)") {
+    ov <- filtered_data()$graph_overlay
+    data <- ov[, .(year, group, definition, headcount)]
+  }
     write.csv(data, file, row.names = FALSE)
   }
 )
@@ -251,13 +358,14 @@ output$download_filtered_dta <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".dta")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
-    data <- if (tab == "Poverty headcount and the number of poor") {
+    tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
+    data <- if (tab == "Poverty Headcount and the Number of Poor") {
       d1 <- filtered_data()$graph1
       d0 <- filtered_data()$graph0
       gv <- underscore_var(input$group_var1)
       merge(d1, d0, by = c("year", gv), all = TRUE)
-    } else {
+      
+    } else if (tab == "Compare Groups (Side-by-Side)") {
       d1  <- filtered_data()$graph1
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
@@ -265,7 +373,10 @@ output$download_filtered_dta <- downloadHandler(
       if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
       if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       data.table::rbindlist(list(d1, d2), fill = TRUE)
+    } else if (tab == "Compare Groups (Overlay)") {
+    data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount)]
     }
+    
     haven::write_dta(as.data.frame(data), file)
   }
 )
@@ -275,13 +386,14 @@ output$download_filtered_excel <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".xlsx")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
-    data <- if (tab == "Poverty headcount and the number of poor") {
+    tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
+    data <- if (tab == "Poverty Headcount and the Number of Poor") {
       d1 <- filtered_data()$graph1
       d0 <- filtered_data()$graph0
       gv <- underscore_var(input$group_var1)
       merge(d1, d0, by = c("year", gv), all = TRUE)
-    } else {
+      
+    } else if (tab == "Compare Groups (Side-by-Side)") {
       d1  <- filtered_data()$graph1
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
@@ -289,7 +401,12 @@ output$download_filtered_excel <- downloadHandler(
       if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
       if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       data.table::rbindlist(list(d1, d2), fill = TRUE)
-    }
+    
+      
+  } else if (tab == "Compare Groups (Overlay)") {       
+    data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount)]
+  }
+    
     writexl::write_xlsx(as.data.frame(data), file)
   }
 )
@@ -333,62 +450,73 @@ uiOutput("dynamic_sidebar")
 
 ```{r}
 
-### Dashboard Description
-HTML("
-  <div style='margin-bottom: 15px; font-size: 14px; line-height: 1.6; max-width: 100%;'>
-    <p>
-      This dashboard presents poverty statistics for various groups that are not currently reported on the 
-      <em>World Bank’s Poverty and Inequality Platform (PIP)</em>, but are often used in reports and analyses. 
-      It uses the latest vintage of PIP data (September 2025) and applies the <strong>2021 PPPs</strong>.
-    </p>
-
-    <p>
-      It presents poverty indicators—<strong>poverty rate</strong> and <strong>millions of poor people</strong>—
-      at the three global poverty lines used by the World Bank: <strong>$3.00</strong>, <strong>$4.20</strong>, and <strong>$8.30</strong>. 
-      Four types of groupings are included: (i) geographic regions, (ii) World Bank income groups, 
-      (iii) World Bank fragility classification (FCV), and (iv) IDA eligibility status.
-    </p>
-
-    <p>
-      With the September 2025 PIP update, PIP’s geographical regions were aligned with the 
-      <em>World Bank’s official regional classification</em>. Prior to this, PIP used its own regional definition 
-      that excluded some high-income economies from regional aggregates, placing them into a separate group 
-      called “Other High Income.” This grouping no longer appears, and a new region—<strong>North America</strong>—now exists.
-    </p>
-
-    <p>
-      Users should note that the World Bank has recently reclassified <strong>Afghanistan</strong> and <strong>Pakistan</strong> 
-      from the <em>South Asia</em> region to <em>Middle East & North Africa</em>. As a result of these and other changes, 
-      <strong>Sub-Saharan Africa</strong> and <strong>Latin America & Caribbean</strong> are the only two regions whose composition remains unchanged. This dashboard allows users 
-      to compare regional aggregates using both the <strong>new</strong> and <strong>old</strong> regional definitions, 
-      while keeping the data vintage constant.
-    </p>
-
-    <p>
-      For income group, FCV, and IDA status, the dashboard presents two types of aggregates:
-      <strong>latest classification</strong> (where each country is grouped based on its most recent fiscal year category, held constant over time),
-      and <strong>historical classification</strong> (where groupings change year-to-year based on past classifications). 
-      The historical series may exhibit more volatility due to these reclassifications over time.
-    </p>
-  </div>
-")
-
 tabsetPanel(
   id   = "active_tab",
   type = "tabs",
-  tabPanel("Poverty headcount and the number of poor"),
-  tabPanel("Comparison")
+
+  tabPanel(
+    "About",
+    HTML("
+      <div style='margin-bottom: 15px; font-size: 14px; line-height: 1.6; max-width: 100%;'>
+        <p>
+          This dashboard presents poverty statistics for various groups that are not currently reported on the 
+          <em>World Bank’s Poverty and Inequality Platform (PIP)</em>, but are often used in reports and analyses. 
+          It uses the latest vintage of PIP data (September 2025) and applies the <strong>2021 PPPs</strong>.
+        </p>
+
+        <p>
+          It presents poverty indicators—<strong>poverty rate</strong> and <strong>millions of poor people</strong>—
+          at the three global poverty lines used by the World Bank: <strong>$3.00</strong>, <strong>$4.20</strong>, and <strong>$8.30</strong>. 
+          Four types of groupings are included: (i) geographic regions, (ii) World Bank income groups, 
+          (iii) World Bank fragility classification (FCV), and (iv) IDA eligibility status.
+        </p>
+
+        <p>
+          With the September 2025 PIP update, PIP’s geographical regions were aligned with the 
+          <em>World Bank’s official regional classification</em>. Prior to this, PIP used its own regional definition 
+          that excluded some high-income economies from regional aggregates, placing them into a separate group 
+          called “Other High Income.” This grouping no longer appears, and a new region—<strong>North America</strong>—now exists.
+        </p>
+
+        <p>
+          Users should note that the World Bank has recently reclassified <strong>Afghanistan</strong> and <strong>Pakistan</strong> 
+          from the <em>South Asia</em> region to <em>Middle East & North Africa</em>. As a result of these and other changes, 
+          <strong>Sub-Saharan Africa</strong> and <strong>Latin America & Caribbean</strong> are the only two regions whose composition remains unchanged. This dashboard allows users 
+          to compare regional aggregates using both the <strong>new</strong> and <strong>old</strong> regional definitions, 
+          while keeping the data vintage constant.
+        </p>
+
+        <p>
+          For income group, FCV, and IDA status, the dashboard presents two types of aggregates:
+          <strong>latest classification</strong> (where each country is grouped based on its most recent fiscal year category, held constant over time),
+          and <strong>historical classification</strong> (where groupings change year-to-year based on past classifications). 
+          The historical series may exhibit more volatility due to these reclassifications over time.
+        </p>
+      </div>
+    ")
+  ),
+
+  tabPanel("Poverty Headcount and the Number of Poor"),
+  tabPanel("Compare Groups (Side-by-Side)"),
+  tabPanel("Compare Groups (Overlay)")
 )
+
 
 
 ```
 
 ```{r plot-output-mainplot}
-plotOutput("main_plot")
 
-div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
-    "Source: Poverty and Inequality Platform (September 2025)"
+conditionalPanel(
+  condition = "input.active_tab != 'About'",
+  tagList(
+    plotOutput("main_plot"),
+    div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
+        "Source: Poverty and Inequality Platform (September 2025)"
+    )
+  )
 )
+
 
 ```
 
@@ -398,9 +526,13 @@ last_plot <- reactiveVal(NULL)
 
 output$main_plot <- renderPlot({
 
+    if (input$active_tab == "About") {
+    return(NULL)  # or show a small placeholder if you prefer
+    }
+    
   d_list <- filtered_data()
 
-  if (input$active_tab == "Poverty headcount and the number of poor") {
+  if (input$active_tab == "Poverty Headcount and the Number of Poor") {
 
     if (fnrow(d_list$graph1) == 0 & fnrow(d_list$graph2) == 0) {
       ggplot() +
@@ -443,7 +575,7 @@ output$main_plot <- renderPlot({
       
       
     }
-  } else if (input$active_tab == "Comparison") {
+  } else if (input$active_tab == "Compare Groups (Side-by-Side)") {
 
 
     if (fnrow(d_list$graph1) == 0 & fnrow(d_list$graph2) == 0) {
@@ -485,6 +617,43 @@ output$main_plot <- renderPlot({
       last_plot(p)
       return(p)
     }
+  }
+    # ---- NEW: Compare Groups (Overlay) ----
+  else if (input$active_tab == "Compare Groups (Overlay)") {
+
+    ov <- filtered_data()$graph_overlay
+
+    if (is.null(ov) || fnrow(ov) == 0) {
+      return(
+        ggplot() +
+          annotate("text",
+                   x = 1, y = 1,
+                   label = "This selection has no data.",
+                   size = 6, hjust = 0.5) +
+          theme_void()
+      )
+    }
+
+    p <- ggplot(
+      ov,
+      aes(x = year,
+          y = headcount * 100,
+          color = .data[["line_label"]])
+    ) +
+      geom_line(linewidth = 1) +
+      labs(
+        title = "Poverty rate: Compare Groups (Overlay)",
+        y     = "Poverty headcount, %",
+        x     = ""
+      ) +
+      my_theme(by = input$group_var1) +
+    scale_color_manual(values = c(              
+      "Line #1" = "#34A7F2",
+      "Line #2" = "#4EC2C0"
+    ))
+
+    last_plot(p)
+    return(p)
   }
 })
 
