@@ -1,5 +1,6 @@
 ### GET THE NECESSARY DATA ###
 
+# devtools::install_github("worldbank/pip", ref = "0.10.15.9000")
 
 rm(list = ls())
 
@@ -35,6 +36,18 @@ reg_old <- get_aux("country_list") %>%
 
 # Poverty data from PIP
 
+# (PLACEHOLDER) Import downloaded latest updates for PIP data
+
+# country_data <- read_dta("data/pip_survey_20250930_2021_01_02_PROD.dta") %>%
+#     rename(iso3c = country_code,
+#            pop = population) %>%
+#     left_join(class_data, by = "iso3c") %>%
+#     left_join(reg_old, by = "iso3c") %>%
+#     select(region_name, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
+#     mutate(pop_in_pov = headcount * pop)
+
+
+# (RECOVER AFTER UPDATE) Extract data directly from PIP
 country_data <- purrr::map_df(
     .x = povertylines,
     .f = pipr::get_stats,
@@ -50,7 +63,5 @@ country_data <- purrr::map_df(
     rename(region_name = region)
 
 # write
-fs::dir_create("data")
-
 fst::write_fst(x    = country_data,
                path = fs::path("country_data.fst"))
