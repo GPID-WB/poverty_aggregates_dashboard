@@ -267,7 +267,7 @@ filtered_data <- reactive({
     ][, `:=`(
       group      = input$overlay1_value,
       definition = input$group_var1,
-      line_label = "Line #1"     # ← change here
+      line_label = "Line A"     # ← change here
     )]
     
     # Line B
@@ -278,7 +278,7 @@ filtered_data <- reactive({
     ][, `:=`(
       group      = input$overlay2_value,
       definition = input$group_var2,
-      line_label = "Line #2"     # ← and here
+      line_label = "Line B"     # ← and here
     )]
 
 
@@ -648,8 +648,8 @@ output$main_plot <- renderPlot({
       ) +
       my_theme(by = input$group_var1) +
     scale_color_manual(values = c(              
-      "Line #1" = "#34A7F2",
-      "Line #2" = "#4EC2C0"
+      "Line A" = "#34A7F2",
+      "Line B" = "#4EC2C0"
     ))
 
     last_plot(p)
