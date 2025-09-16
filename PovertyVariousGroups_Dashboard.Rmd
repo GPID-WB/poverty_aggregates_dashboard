@@ -255,37 +255,43 @@ filtered_data <- reactive({
     d2 <- data.table()
   }
 
-      # ---- ONLY for the new overlay tab: build two single lines and combine ----
-  if (tab == "Compare Groups (Overlay)") {
-    req(input$group_var2, input$overlay1_value, input$overlay2_value)
+   # ---- ONLY for the new overlay tab: build two single lines and combine ----
+if (tab == "Compare Groups (Overlay)") {
+  req(input$group_var2, input$overlay1_value, input$overlay2_value)
 
-    # Line A
-    dA <- dt[
-      get(gv1) == input$overlay1_value,
-      .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
-      by = .(year)
-    ][, `:=`(
-      group      = input$overlay1_value,
-      definition = input$group_var1,
-      line_label = "Line A"     # ← change here
-    )]
-    
-    # Line B
-    dB <- dt[
-      get(gv2) == input$overlay2_value,
-      .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
-      by = .(year)
-    ][, `:=`(
-      group      = input$overlay2_value,
-      definition = input$group_var2,
-      line_label = "Line B"     # ← and here
-    )]
+  # Line A: rate + millions of poor
+  dA <- dt[
+    get(gv1) == input$overlay1_value,
+    .(
+      headcount  = weighted.mean(headcount, pop, na.rm = TRUE),
+      pop_in_pov = sum(pop_in_pov, na.rm = TRUE)
+    ),
+    by = .(year)
+  ][, `:=`(
+    group      = input$overlay1_value,
+    definition = input$group_var1,
+    line_label = "Line A"
+  )]
 
+  # Line B: rate + millions of poor
+  dB <- dt[
+    get(gv2) == input$overlay2_value,
+    .(
+      headcount  = weighted.mean(headcount, pop, na.rm = TRUE),
+      pop_in_pov = sum(pop_in_pov, na.rm = TRUE)
+    ),
+    by = .(year)
+  ][, `:=`(
+    group      = input$overlay2_value,
+    definition = input$group_var2,
+    line_label = "Line B"
+  )]
 
-    overlay <- data.table::rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
+  overlay <- data.table::rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
 
-    return(list(graph0 = d0, graph1 = d1, graph2 = d2, graph_overlay = overlay))
-  }
+  return(list(graph0 = d0, graph1 = d1, graph2 = d2, graph_overlay = overlay))
+}
+
 
   # Default (all other tabs unchanged)
   list(graph0 = d0, graph1 = d1, graph2 = d2)
@@ -319,7 +325,7 @@ output$download_filtered <- downloadHandler(
       data.table::rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
     ov <- filtered_data()$graph_overlay
-    data <- ov[, .(year, group, definition, headcount)]
+    data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
   }
     write.csv(data, file, row.names = FALSE)
   }
@@ -347,7 +353,8 @@ output$download_filtered_csv <- downloadHandler(
       data.table::rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
     ov <- filtered_data()$graph_overlay
-    data <- ov[, .(year, group, definition, headcount)]
+    data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
+
   }
     write.csv(data, file, row.names = FALSE)
   }
@@ -374,7 +381,7 @@ output$download_filtered_dta <- downloadHandler(
       if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       data.table::rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
-    data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount)]
+    data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
     }
     
     haven::write_dta(as.data.frame(data), file)
@@ -404,7 +411,7 @@ output$download_filtered_excel <- downloadHandler(
     
       
   } else if (tab == "Compare Groups (Overlay)") {       
-    data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount)]
+    data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
   }
     
     writexl::write_xlsx(as.data.frame(data), file)
@@ -454,6 +461,11 @@ tabsetPanel(
   id   = "active_tab",
   type = "tabs",
 
+  tabPanel("Poverty Headcount and the Number of Poor"),
+  
+  tabPanel("Compare Groups (Overlay)"),
+  tabPanel("Compare Groups (Side-by-Side)"),
+  
   tabPanel(
     "About",
     HTML("
@@ -494,11 +506,7 @@ tabsetPanel(
         </p>
       </div>
     ")
-  ),
-
-  tabPanel("Poverty Headcount and the Number of Poor"),
-  tabPanel("Compare Groups (Side-by-Side)"),
-  tabPanel("Compare Groups (Overlay)")
+  )
 )
 
 
@@ -618,43 +626,65 @@ output$main_plot <- renderPlot({
       return(p)
     }
   }
-    # ---- NEW: Compare Groups (Overlay) ----
   else if (input$active_tab == "Compare Groups (Overlay)") {
 
-    ov <- filtered_data()$graph_overlay
+  ov <- filtered_data()$graph_overlay
 
-    if (is.null(ov) || fnrow(ov) == 0) {
-      return(
-        ggplot() +
-          annotate("text",
-                   x = 1, y = 1,
-                   label = "This selection has no data.",
-                   size = 6, hjust = 0.5) +
-          theme_void()
-      )
-    }
+  if (is.null(ov) || fnrow(ov) == 0) {
+    return(
+      ggplot() +
+        annotate("text",
+                 x = 1, y = 1,
+                 label = "This selection has no data.",
+                 size = 6, hjust = 0.5) +
+        theme_void()
+    )
+  }
 
-    p <- ggplot(
-      ov,
-      aes(x = year,
-          y = headcount * 100,
-          color = .data[["line_label"]])
+  # Overlay: Poverty rate (%)
+  p_rate <- ggplot(
+    ov,
+    aes(x = year,
+        y = headcount * 100,
+        color = .data[["line_label"]])
+  ) +
+    geom_line(linewidth = 1) +
+    labs(
+      title = "Poverty rate: Compare Groups (Overlay)",
+      y     = "Poverty headcount, %",
+      x     = ""
     ) +
-      geom_line(linewidth = 1) +
-      labs(
-        title = "Poverty rate: Compare Groups (Overlay)",
-        y     = "Poverty headcount, %",
-        x     = ""
-      ) +
-      my_theme(by = input$group_var1) +
-    scale_color_manual(values = c(              
+    my_theme(by = input$group_var1) +
+    scale_color_manual(values = c(
       "Line A" = "#34A7F2",
       "Line B" = "#4EC2C0"
     ))
 
-    last_plot(p)
-    return(p)
-  }
+  # Overlay: Millions of poor
+  p_pop <- ggplot(
+    ov,
+    aes(x = year,
+        y = pop_in_pov / 1e6,
+        color = .data[["line_label"]])
+  ) +
+    geom_line(linewidth = 1) +
+    labs(
+      title = "Millions of poor: Compare Groups (Overlay)",
+      y     = "Millions of poor",
+      x     = ""
+    ) +
+    my_theme(by = input$group_var1) +
+    scale_color_manual(values = c(
+      "Line A" = "#34A7F2",
+      "Line B" = "#4EC2C0"
+    ))
+
+  # Show side-by-side
+  p <- p_rate + p_pop
+  last_plot(p)
+  return(p)
+}
+
 })
 
 
