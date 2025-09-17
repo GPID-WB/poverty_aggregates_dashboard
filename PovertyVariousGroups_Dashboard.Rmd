@@ -287,7 +287,7 @@ if (tab == "Compare Groups (Overlay)") {
     line_label = "Line B"
   )]
 
-  overlay <- data.table::rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
+  overlay <- rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
 
   return(list(graph0 = d0, graph1 = d1, graph2 = d2, graph_overlay = overlay))
 }
@@ -320,9 +320,9 @@ output$download_filtered <- downloadHandler(
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
       gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      data.table::rbindlist(list(d1, d2), fill = TRUE)
+      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
@@ -348,9 +348,9 @@ output$download_filtered_csv <- downloadHandler(
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
       gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      data.table::rbindlist(list(d1, d2), fill = TRUE)
+      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
@@ -377,9 +377,9 @@ output$download_filtered_dta <- downloadHandler(
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
       gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      data.table::rbindlist(list(d1, d2), fill = TRUE)
+      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
     data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
     }
@@ -405,9 +405,9 @@ output$download_filtered_excel <- downloadHandler(
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
       gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      data.table::rbindlist(list(d1, d2), fill = TRUE)
+      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      rbindlist(list(d1, d2), fill = TRUE)
     
       
   } else if (tab == "Compare Groups (Overlay)") {       
