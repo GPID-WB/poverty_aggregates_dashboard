@@ -115,7 +115,7 @@ output$dynamic_sidebar <- renderUI({
   tagList(
     # Selection A
     selectInput("group_var1",
-                "Select grouping for Line A",
+                "Select first group to chart",
                 choices = c("Region (new WB classification)",
                             "Region (old PovcalNet classification)",
                             "Income group (historical)",
@@ -129,7 +129,7 @@ output$dynamic_sidebar <- renderUI({
 
     # Selection B
     selectInput("group_var2",
-                "Select grouping for Line B",
+                "Select second group to chart",
                 choices = c("Region (new WB classification)",
                             "Region (old PovcalNet classification)",
                             "Income group (historical)",
@@ -194,7 +194,7 @@ output$overlay1_value_ui <- renderUI({
   req(input$group_var1)
   choices <- group_choices(input$group_var1)
   selectInput("overlay1_value",
-              "Choose one value for Line A",
+              "Choose value from first group",
               choices = choices,
               selected = choices[4],
               multiple = FALSE)
@@ -205,7 +205,7 @@ output$overlay2_value_ui <- renderUI({
   req(input$group_var2)
   choices <- group_choices(input$group_var2)
   selectInput("overlay2_value",
-              "Choose one value for Line B",
+              "Choose value from second group",
               choices = choices,
               selected = choices[4],
               multiple = FALSE)
@@ -274,7 +274,8 @@ if (tab == "Compare Groups (Overlay)") {
   ][, `:=`(
     group      = input$overlay1_value,
     definition = input$group_var1,
-    line_label = "Line A"
+    line_label = paste0(input$group_var1, ": ", input$overlay1_value)
+
   )]
 
   # Line B: rate + millions of poor
@@ -288,7 +289,8 @@ if (tab == "Compare Groups (Overlay)") {
   ][, `:=`(
     group      = input$overlay2_value,
     definition = input$group_var2,
-    line_label = "Line B"
+    line_label = paste0(input$group_var2, ": ", input$overlay2_value)
+
   )]
 
   overlay <- rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
@@ -645,6 +647,12 @@ output$main_plot <- renderPlot({
     )
   }
 
+    # --- dynamic legend labels + color map
+    labA <- paste0(input$group_var1, ": ", input$overlay1_value)
+    labB <- paste0(input$group_var2, ": ", input$overlay2_value)
+    
+    col_map <- setNames(c("#34A7F2", "#4EC2C0"), c(labA, labB))
+
   # Overlay: Poverty rate (%)
   p_rate <- ggplot(
     ov,
@@ -659,10 +667,7 @@ output$main_plot <- renderPlot({
       x     = ""
     ) +
     my_theme(by = input$group_var1) +
-    scale_color_manual(values = c(
-      "Line A" = "#34A7F2",
-      "Line B" = "#4EC2C0"
-    ))
+    scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL))
 
   # Overlay: Millions of poor
   p_pop <- ggplot(
@@ -678,11 +683,8 @@ output$main_plot <- renderPlot({
       x     = ""
     ) +
     my_theme(by = input$group_var1) +
-    scale_color_manual(values = c(
-      "Line A" = "#34A7F2",
-      "Line B" = "#4EC2C0"
-    ))
-
+    scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL))
+  
   # Show side-by-side
   p <- p_rate + p_pop
   last_plot(p)
