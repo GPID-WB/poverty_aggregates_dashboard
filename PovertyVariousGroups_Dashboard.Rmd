@@ -82,7 +82,8 @@ output$dynamic_sidebar <- renderUI({
                               "FCV (historical)",
                               "FCV (latest)",
                               "IDA (historical)",
-                              "IDA (latest)")),
+                              "IDA (latest)"),
+                  selected = "Region (new WB classification)"),
       uiOutput("group1_ui"),
 
       selectInput("group_var2",
@@ -94,7 +95,8 @@ output$dynamic_sidebar <- renderUI({
                               "FCV (historical)",
                               "FCV (latest)",
                               "IDA (historical)",
-                              "IDA (latest)")),
+                              "IDA (latest)"),
+                  selected = "Region (old PovcalNet classification)"),
       uiOutput("group2_ui"),
 
       radioButtons("selected_line",
