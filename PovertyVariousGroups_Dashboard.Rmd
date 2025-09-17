@@ -121,7 +121,8 @@ output$dynamic_sidebar <- renderUI({
                             "FCV (historical)",
                             "FCV (latest)",
                             "IDA (historical)",
-                            "IDA (latest)")),
+                            "IDA (latest)"),
+                 selected = "Region (new WB classification)"),
     uiOutput("overlay1_value_ui"),
 
     # Selection B
@@ -134,7 +135,8 @@ output$dynamic_sidebar <- renderUI({
                             "FCV (historical)",
                             "FCV (latest)",
                             "IDA (historical)",
-                            "IDA (latest)")),
+                            "IDA (latest)"),
+                selected = "Region (old PovcalNet classification)"),
     uiOutput("overlay2_value_ui"),
 
     # Poverty line + downloads
@@ -192,7 +194,7 @@ output$overlay1_value_ui <- renderUI({
   selectInput("overlay1_value",
               "Choose one value for Line A",
               choices = choices,
-              selected = choices[1],
+              selected = choices[4],
               multiple = FALSE)
 })
 
@@ -203,7 +205,7 @@ output$overlay2_value_ui <- renderUI({
   selectInput("overlay2_value",
               "Choose one value for Line B",
               choices = choices,
-              selected = choices[1],
+              selected = choices[4],
               multiple = FALSE)
 })
 
