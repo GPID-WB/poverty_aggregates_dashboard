@@ -16,8 +16,24 @@ space_var <- function(cn) {
 #' @examples
 #' underscore_var(c("region name", "fcv current"))
 #' @export
+
+# underscore_var <- function(cn) {
+#     gsub(pattern = " ", replacement = "_", x = cn)
+# }
+
 underscore_var <- function(cn) {
-    gsub(pattern = " ", replacement = "_", x = cn)
+    if (is.null(cn)) return(NULL)
+
+    dplyr::recode(cn,
+                  "Region (new WB classification)" = "region_name",
+                  "Region (old PovcalNet classification)"     = "region_old",
+                  "Income group (historical)" = "incgroup_historical",
+                  "Income group (latest)"    = "incgroup_current",
+                  "FCV (historical)"      = "fcv_historical",
+                  "FCV (latest)"         = "fcv_current",
+                  "IDA (historical)"      = "ida_historical",
+                  "IDA (latest)"         = "ida_current",
+                  .default = gsub(" ", "_", cn))
 }
 
 
@@ -26,7 +42,7 @@ my_theme <- function(by,
                      base_size   = 5,
                      legend      = c("bottom", "top", "left", "right", "none"),
                      drop        = FALSE,
-                     legend_nrow = 2) {
+                     legend_nrow = 3) {
     legend <- match.arg(legend)
 
     # Map `by` to region / income / other
@@ -46,7 +62,7 @@ my_theme <- function(by,
             text              = element_text(size = base_size),
             legend.position   = legend,
             legend.title      = element_blank(),
-            legend.text       = element_text(size = 2.9),
+            legend.text       = element_text(size = 5),
             legend.key.size   = unit(0.5, "cm"),
             legend.key.width  = unit(0.5, "cm"),
             legend.spacing.x  = unit(1, "mm"),
@@ -94,6 +110,7 @@ wb_region_colors <- function() {
         "Europe & Central Asia"         = "#AA0000",
         "Latin America & Caribbean"     = "#0C7C68",
         "Middle East & North Africa"    = "#664AB6",
+        "Middle East, North Africa, Afghanistan & Pakistan" = "#664AB6",
         "Other High Income Countries"   = "#34A7F2",
         "South Asia"                    = "#4EC2C0",
         "Sub-Saharan Africa"            = "#FF9800"
@@ -126,6 +143,7 @@ scale_income_color_manual <- function(drop = FALSE) {
 scale_income_fill_manual <- function(drop = FALSE) {
     scale_fill_manual(values = wb_income_colors(), drop = drop)
 }
+
 
 
 
