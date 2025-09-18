@@ -524,7 +524,7 @@ tabsetPanel(
 conditionalPanel(
   condition = "input.active_tab != 'About'",
   tagList(
-    plotOutput("main_plot"),
+    plotOutput("main_plot", height = "auto"),
     div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
         "Source: Poverty and Inequality Platform (September 2025)"
     )
@@ -691,6 +691,11 @@ output$main_plot <- renderPlot({
   return(p)
 }
 
+}, height = function() {
+  w <- session$clientData$output_main_plot_width
+  h <- round(w * 0.45)
+  h <- max(450, min(h, 900))
+  h
 })
 
 
