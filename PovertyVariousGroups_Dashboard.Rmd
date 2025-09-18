@@ -82,7 +82,8 @@ output$dynamic_sidebar <- renderUI({
                               "FCV (historical)",
                               "FCV (latest)",
                               "IDA (historical)",
-                              "IDA (latest)")),
+                              "IDA (latest)"),
+                  selected = "Region (new WB classification)"),
       uiOutput("group1_ui"),
 
       selectInput("group_var2",
@@ -94,7 +95,8 @@ output$dynamic_sidebar <- renderUI({
                               "FCV (historical)",
                               "FCV (latest)",
                               "IDA (historical)",
-                              "IDA (latest)")),
+                              "IDA (latest)"),
+                  selected = "Region (old PovcalNet classification)"),
       uiOutput("group2_ui"),
 
       radioButtons("selected_line",
@@ -113,7 +115,7 @@ output$dynamic_sidebar <- renderUI({
   tagList(
     # Selection A
     selectInput("group_var1",
-                "Select grouping for Line A",
+                "Select first group to chart",
                 choices = c("Region (new WB classification)",
                             "Region (old PovcalNet classification)",
                             "Income group (historical)",
@@ -121,12 +123,13 @@ output$dynamic_sidebar <- renderUI({
                             "FCV (historical)",
                             "FCV (latest)",
                             "IDA (historical)",
-                            "IDA (latest)")),
+                            "IDA (latest)"),
+                 selected = "Region (new WB classification)"),
     uiOutput("overlay1_value_ui"),
 
     # Selection B
     selectInput("group_var2",
-                "Select grouping for Line B",
+                "Select second group to chart",
                 choices = c("Region (new WB classification)",
                             "Region (old PovcalNet classification)",
                             "Income group (historical)",
@@ -134,7 +137,8 @@ output$dynamic_sidebar <- renderUI({
                             "FCV (historical)",
                             "FCV (latest)",
                             "IDA (historical)",
-                            "IDA (latest)")),
+                            "IDA (latest)"),
+                selected = "Region (old PovcalNet classification)"),
     uiOutput("overlay2_value_ui"),
 
     # Poverty line + downloads
@@ -190,9 +194,9 @@ output$overlay1_value_ui <- renderUI({
   req(input$group_var1)
   choices <- group_choices(input$group_var1)
   selectInput("overlay1_value",
-              "Choose one value for Line A",
+              "Choose value from first group",
               choices = choices,
-              selected = choices[1],
+              selected = choices[4],
               multiple = FALSE)
 })
 
@@ -201,9 +205,9 @@ output$overlay2_value_ui <- renderUI({
   req(input$group_var2)
   choices <- group_choices(input$group_var2)
   selectInput("overlay2_value",
-              "Choose one value for Line B",
+              "Choose value from second group",
               choices = choices,
-              selected = choices[1],
+              selected = choices[4],
               multiple = FALSE)
 })
 
@@ -270,7 +274,8 @@ if (tab == "Compare Groups (Overlay)") {
   ][, `:=`(
     group      = input$overlay1_value,
     definition = input$group_var1,
-    line_label = "Line A"
+    line_label = paste0(input$group_var1, ": ", input$overlay1_value)
+
   )]
 
   # Line B: rate + millions of poor
@@ -284,10 +289,11 @@ if (tab == "Compare Groups (Overlay)") {
   ][, `:=`(
     group      = input$overlay2_value,
     definition = input$group_var2,
-    line_label = "Line B"
+    line_label = paste0(input$group_var2, ": ", input$overlay2_value)
+
   )]
 
-  overlay <- data.table::rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
+  overlay <- rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
 
   return(list(graph0 = d0, graph1 = d1, graph2 = d2, graph_overlay = overlay))
 }
@@ -320,9 +326,9 @@ output$download_filtered <- downloadHandler(
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
       gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      data.table::rbindlist(list(d1, d2), fill = TRUE)
+      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
@@ -348,9 +354,9 @@ output$download_filtered_csv <- downloadHandler(
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
       gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      data.table::rbindlist(list(d1, d2), fill = TRUE)
+      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
@@ -377,9 +383,9 @@ output$download_filtered_dta <- downloadHandler(
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
       gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      data.table::rbindlist(list(d1, d2), fill = TRUE)
+      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare Groups (Overlay)") {
     data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
     }
@@ -405,9 +411,9 @@ output$download_filtered_excel <- downloadHandler(
       d2  <- filtered_data()$graph2
       gv1 <- underscore_var(input$group_var1)
       gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- data.table::copy(d1); data.table::setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- data.table::copy(d2); data.table::setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      data.table::rbindlist(list(d1, d2), fill = TRUE)
+      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+      rbindlist(list(d1, d2), fill = TRUE)
     
       
   } else if (tab == "Compare Groups (Overlay)") {       
@@ -518,7 +524,7 @@ tabsetPanel(
 conditionalPanel(
   condition = "input.active_tab != 'About'",
   tagList(
-    plotOutput("main_plot"),
+    plotOutput("main_plot", height = "auto"),
     div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
         "Source: Poverty and Inequality Platform (September 2025)"
     )
@@ -641,6 +647,12 @@ output$main_plot <- renderPlot({
     )
   }
 
+    # --- dynamic legend labels + color map
+    labA <- paste0(input$group_var1, ": ", input$overlay1_value)
+    labB <- paste0(input$group_var2, ": ", input$overlay2_value)
+    
+    col_map <- setNames(c("#34A7F2", "#4EC2C0"), c(labA, labB))
+
   # Overlay: Poverty rate (%)
   p_rate <- ggplot(
     ov,
@@ -655,10 +667,7 @@ output$main_plot <- renderPlot({
       x     = ""
     ) +
     my_theme(by = input$group_var1) +
-    scale_color_manual(values = c(
-      "Line A" = "#34A7F2",
-      "Line B" = "#4EC2C0"
-    ))
+    scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL))
 
   # Overlay: Millions of poor
   p_pop <- ggplot(
@@ -674,17 +683,19 @@ output$main_plot <- renderPlot({
       x     = ""
     ) +
     my_theme(by = input$group_var1) +
-    scale_color_manual(values = c(
-      "Line A" = "#34A7F2",
-      "Line B" = "#4EC2C0"
-    ))
-
+    scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL))
+  
   # Show side-by-side
   p <- p_rate + p_pop
   last_plot(p)
   return(p)
 }
 
+}, height = function() {
+  w <- session$clientData$output_main_plot_width
+  h <- round(w * 0.45)
+  h <- max(450, min(h, 900))
+  h
 })
 
 
