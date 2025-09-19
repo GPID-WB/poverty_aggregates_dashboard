@@ -499,7 +499,7 @@ tabsetPanel(
         <p>
           Users should note that the World Bank has recently reclassified <strong>Afghanistan</strong> and <strong>Pakistan</strong> 
           from the <em>South Asia</em> region to <em>Middle East & North Africa</em>. As a result of this, as well as the change in the high-income countries,
-          <strong>Sub-Saharan Africa</strong> is the only two region whose composition remains unchanged. This dashboard allows users 
+          <strong>Sub-Saharan Africa</strong> is the only region whose composition remains unchanged. This dashboard allows users 
           to compare regional aggregates using both the <strong>new</strong> and <strong>old</strong> regional definitions, 
           while keeping the data vintage constant.
         </p>
