@@ -111,7 +111,7 @@ output$dynamic_sidebar <- renderUI({
     )
   }
   
-  else if (tab == "Compare Groups (Overlay)") {
+  else if (tab == "Compare groups") {
   tagList(
     # Selection A
     selectInput("group_var1",
@@ -260,7 +260,7 @@ filtered_data <- reactive({
   }
 
    # ---- ONLY for the new overlay tab: build two single lines and combine ----
-if (tab == "Compare Groups (Overlay)") {
+if (tab == "Compare groups") {
   req(input$group_var2, input$overlay1_value, input$overlay2_value)
 
   # Line A: rate + millions of poor
@@ -329,7 +329,7 @@ output$download_filtered <- downloadHandler(
       if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
       if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       rbindlist(list(d1, d2), fill = TRUE)
-    } else if (tab == "Compare Groups (Overlay)") {
+    } else if (tab == "Compare groups") {
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
   }
@@ -357,7 +357,7 @@ output$download_filtered_csv <- downloadHandler(
       if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
       if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       rbindlist(list(d1, d2), fill = TRUE)
-    } else if (tab == "Compare Groups (Overlay)") {
+    } else if (tab == "Compare groups") {
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
 
@@ -386,7 +386,7 @@ output$download_filtered_dta <- downloadHandler(
       if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
       if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       rbindlist(list(d1, d2), fill = TRUE)
-    } else if (tab == "Compare Groups (Overlay)") {
+    } else if (tab == "Compare groups") {
     data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
     }
     
@@ -416,7 +416,7 @@ output$download_filtered_excel <- downloadHandler(
       rbindlist(list(d1, d2), fill = TRUE)
     
       
-  } else if (tab == "Compare Groups (Overlay)") {       
+  } else if (tab == "Compare groups") {       
     data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
   }
     
@@ -469,15 +469,15 @@ tabsetPanel(
 
   tabPanel("Poverty Headcount and the Number of Poor"),
   
-  tabPanel("Compare Groups (Overlay)"),
-  tabPanel("Compare Groups (Side-by-Side)"),
+  tabPanel("Compare groups"),
   
   tabPanel(
     "About",
     HTML("
       <div style='margin-bottom: 15px; font-size: 14px; line-height: 1.6; max-width: 100%;'>
         <p>
-          This dashboard presents poverty statistics for various groups that are not currently reported on the 
+          
+          This dashboard presents poverty statistics for various groups that are not all currently reported on the 
           <em>World Bank’s Poverty and Inequality Platform (PIP)</em>, but are often used in reports and analyses. 
           It uses the latest vintage of PIP data (September 2025) and applies the <strong>2021 PPPs</strong>.
         </p>
@@ -491,15 +491,15 @@ tabsetPanel(
 
         <p>
           With the September 2025 PIP update, PIP’s geographical regions were aligned with the 
-          <em>World Bank’s official regional classification</em>. Prior to this, PIP used its own regional definition 
+          <em>World Bank’s official regional classification</em>. Prior to this, PIP used its own regional definition (that originated from the previous platform called PovcalNet) 
           that excluded some high-income economies from regional aggregates, placing them into a separate group 
-          called “Other High Income.” This grouping no longer appears, and a new region—<strong>North America</strong>—now exists.
+          called “Other High Income.” This grouping no longer appears, and a new region—<strong>North America</strong>—now exists. The countries previously included in the “Other High Income” group are now included in their geographic World Bank regions. 
         </p>
 
         <p>
           Users should note that the World Bank has recently reclassified <strong>Afghanistan</strong> and <strong>Pakistan</strong> 
-          from the <em>South Asia</em> region to <em>Middle East & North Africa</em>. As a result of these and other changes, 
-          <strong>Sub-Saharan Africa</strong> and <strong>Latin America & Caribbean</strong> are the only two regions whose composition remains unchanged. This dashboard allows users 
+          from the <em>South Asia</em> region to <em>Middle East & North Africa</em>. As a result of this, as well as the change in the high-income countries,
+          <strong>Sub-Saharan Africa</strong> is the only two region whose composition remains unchanged. This dashboard allows users 
           to compare regional aggregates using both the <strong>new</strong> and <strong>old</strong> regional definitions, 
           while keeping the data vintage constant.
         </p>
@@ -632,7 +632,7 @@ output$main_plot <- renderPlot({
       return(p)
     }
   }
-  else if (input$active_tab == "Compare Groups (Overlay)") {
+  else if (input$active_tab == "Compare groups") {
 
   ov <- filtered_data()$graph_overlay
 
@@ -662,7 +662,7 @@ output$main_plot <- renderPlot({
   ) +
     geom_line(linewidth = 1) +
     labs(
-      title = "Poverty rate: Compare Groups (Overlay)",
+      title = "Poverty rate: Compare groups",
       y     = "Poverty headcount, %",
       x     = ""
     ) +
@@ -678,7 +678,7 @@ output$main_plot <- renderPlot({
   ) +
     geom_line(linewidth = 1) +
     labs(
-      title = "Millions of poor: Compare Groups (Overlay)",
+      title = "Millions of poor: Compare groups",
       y     = "Millions of poor",
       x     = ""
     ) +
