@@ -41,8 +41,8 @@ reg_old <- get_aux("country_list") %>%
 # (PLACEHOLDER) Import downloaded latest updates for PIP data
 
 country_data <- read_dta("data/pip_fillgaps_20250930_2021_01_02_PROD.dta") %>%
-    # left_join(pip_pop, by = c("year", "country_code")) %>%
-    # mutate(population = if_else(country_code == "ARG", value, population)) %>%
+    left_join(pip_pop, by = c("year", "country_code")) %>%
+    mutate(population = if_else(country_code == "ARG", value, population)) %>%
     filter(country_name == "Argentina" | reporting_level == "national") %>%
     rename(iso3c = country_code,
            pop = population) %>%
@@ -51,6 +51,14 @@ country_data <- read_dta("data/pip_fillgaps_20250930_2021_01_02_PROD.dta") %>%
     select(region_name, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
     mutate(pop_in_pov = headcount * pop)
 
+# Create a new variable for WDI region (excluding HICs)
+country_data <- country_data %>%
+    mutate(
+        region_WDI = case_when(
+            incgroup_current != "High income" ~ paste0(region_name, " (excluding HICs)"),
+            TRUE ~ NA_character_
+        )
+    )
 
 # (RECOVER AFTER UPDATE) Extract data directly from PIP
 country_data_old <- purrr::map_df(

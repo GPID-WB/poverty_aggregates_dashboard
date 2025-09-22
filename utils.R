@@ -27,6 +27,7 @@ underscore_var <- function(cn) {
     dplyr::recode(cn,
                   "Region (new WB classification)" = "region_name",
                   "Region (old PovcalNet classification)"     = "region_old",
+                  "Region (new WB classification, excluding HICs)" = "region_WDI",
                   "Income group (historical)" = "incgroup_historical",
                   "Income group (latest)"    = "incgroup_current",
                   "FCV (historical)"      = "fcv_historical",
@@ -49,7 +50,7 @@ my_theme <- function(by,
     gv <- tryCatch(underscore_var(by), error = function(e) by)
     group <- if (gv %chin% c("incgroup_historical", "incgroup_current", "income")) {
         "income"
-    } else if (gv %chin% c("region_name", "region_old", "region")) {
+    } else if (gv %chin% c("region_name", "region_old", "region_WDI", "region")) {
         "region"
     } else {
         "other"
@@ -106,15 +107,21 @@ my_theme <- function(by,
 # 1) Manually set up color palette
 wb_region_colors <- function() {
     c(
-        "East Asia & Pacific"           = "#F3578E",
-        "Europe & Central Asia"         = "#AA0000",
-        "Latin America & Caribbean"     = "#0C7C68",
-        "Middle East & North Africa"    = "#664AB6",
-        "Middle East, North Africa, Afghanistan & Pakistan" = "#664AB6",
-        "Other High Income Countries"   = "#34A7F2",
-        "North America"   = "#34A7F2",
-        "South Asia"                    = "#4EC2C0",
-        "Sub-Saharan Africa"            = "#FF9800"
+        "East Asia & Pacific"                                                = "#F3578E",
+        "East Asia & Pacific (excluding HICs)"                               = "#F3578E",
+        "Europe & Central Asia"                                              = "#AA0000",
+        "Europe & Central Asia (excluding HICs)"                             = "#AA0000",
+        "Latin America & Caribbean"                                          = "#0C7C68",
+        "Latin America & Caribbean (excluding HICs)"                         = "#0C7C68",
+        "Middle East & North Africa"                                         = "#664AB6",
+        "Middle East, North Africa, Afghanistan & Pakistan"                  = "#664AB6",
+        "Middle East, North Africa, Afghanistan & Pakistan (excluding HICs)" = "#664AB6",
+        "Other High Income Countries"                                        = "#34A7F2",
+        "North America"                                                      = "#34A7F2",
+        "South Asia"                                                         = "#4EC2C0",
+        "South Asia (excluding HICs)"                                        = "#4EC2C0",
+        "Sub-Saharan Africa"                                                 = "#FF9800",
+        "Sub-Saharan Africa (excluding HICs)"                                = "#FF9800"
     )
 }
 
