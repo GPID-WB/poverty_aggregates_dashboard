@@ -72,8 +72,11 @@ my_theme <- function(by,
             plot.margin       = margin(1, 1, 1, 1, "cm"),
             panel.background  = element_blank(),
             plot.background   = element_blank(),
-            panel.grid.major  = element_line(color = "#E6E6E6", linewidth = 0.25),
-            panel.grid.minor  = element_blank()
+            panel.grid.major.x   = element_line(color = "#E6E6E6", linewidth = 0.25),  # ✅ vertical
+            panel.grid.major.y   = element_line(color = "#E6E6E6", linewidth = 0.25),  # ✅ horizontal
+            panel.grid.minor  = element_blank(),
+            panel.border = element_rect(color = "black", fill = NA, linewidth = 0.6)
+
         ),
         scale_color_wb_d(),
         scale_fill_wb_d(),
