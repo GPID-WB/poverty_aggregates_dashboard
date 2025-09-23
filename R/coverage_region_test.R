@@ -28,22 +28,22 @@ country_data_cov <- country_data %>%
 
 # 2. Compute total population by region-year
 region_totals <- country_data_cov %>%
-    group_by(region_code, year) %>%
+    group_by(region_old, year) %>%
     summarise(tot_pop = sum(pop, na.rm = TRUE), .groups = "drop")
 
 # 3. Compute covered population by region-year (only where coverage == TRUE)
 region_covered <- country_data_cov %>%
     filter(coverage == TRUE) %>%
-    group_by(region_code, year) %>%
+    group_by(region_old, year) %>%
     summarise(cov_pop = sum(pop, na.rm = TRUE), .groups = "drop")
 
 # 4. Compute pop share and flag whether region-year is "sufficiently covered"
 region_coverage_flag <- region_totals %>%
-    left_join(region_covered, by = c("region_code", "year")) %>%
+    left_join(region_covered, by = c("region_old", "year")) %>%
     mutate(
         pop_share = cov_pop / tot_pop,
         cov_region_name = pop_share >= 0.5  # TRUE if >= 50% coverage
     )
 # 5. Merge flag back to full dataset
 country_data_cov <- country_data_cov %>%
-    left_join(region_coverage_flag, by = c("region_code", "year"))
+    left_join(region_coverage_flag, by = c("region_old", "year"))

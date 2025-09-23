@@ -27,7 +27,7 @@ underscore_var <- function(cn) {
     dplyr::recode(cn,
                   "Region (new WB classification)" = "region_name",
                   "Region (old PovcalNet classification)"     = "region_old",
-                  "Region (new WB classification, excl. HICs)" = "region_WDI",
+                  "Region (new WB classification excl. HICs)" = "region_WDI",
                   "Income group (historical)" = "incgroup_historical",
                   "Income group (latest)"    = "incgroup_current",
                   "FCV (historical)"      = "fcv_historical",
@@ -77,9 +77,15 @@ my_theme <- function(by,
         ),
         scale_color_wb_d(),
         scale_fill_wb_d(),
+        scale_linetype_manual(
+            values = c("≥50% coverage" = "solid", "<50% coverage" = "longdash"),
+            breaks = c("≥50% coverage", "<50% coverage"),
+            guide  = guide_legend(title = NULL)
+        ),
         guides(
             color = guide_legend(nrow = legend_nrow, byrow = TRUE),
-            fill  = guide_legend(nrow = legend_nrow, byrow = TRUE)
+            fill  = guide_legend(nrow = legend_nrow, byrow = TRUE),
+            linetype = guide_legend(nrow = legend_nrow, byrow = TRUE)
         )
     )
 

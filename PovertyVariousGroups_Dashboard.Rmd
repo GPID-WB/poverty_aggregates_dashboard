@@ -51,7 +51,7 @@ output$dynamic_sidebar <- renderUI({
       selectInput("group_var1", "Select the group to chart",
                   choices = c("Region (new WB classification)",
                               "Region (old PovcalNet classification)",
-                              "Region (new WB classification, excl. HICs)",
+                              "Region (new WB classification excl. HICs)",
                               "Income group (historical)",
                               "Income group (latest)",
                               "FCV (historical)",
@@ -78,7 +78,7 @@ output$dynamic_sidebar <- renderUI({
                   "Select group for figure 1",
                   choices = c("Region (new WB classification)",
                               "Region (old PovcalNet classification)",
-                              "Region (new WB classification, excl. HICs)",
+                              "Region (new WB classification excl. HICs)",
                               "Income group (historical)",
                               "Income group (latest)",
                               "FCV (historical)",
@@ -92,7 +92,7 @@ output$dynamic_sidebar <- renderUI({
                   "Select group for figure 2",
                   choices = c("Region (new WB classification)",
                               "Region (old PovcalNet classification)",
-                              "Region (new WB classification, excl. HICs)",
+                              "Region (new WB classification excl. HICs)",
                               "Income group (historical)",
                               "Income group (latest)",
                               "FCV (historical)",
@@ -121,7 +121,7 @@ output$dynamic_sidebar <- renderUI({
                 "Select first group to chart",
                 choices = c("Region (new WB classification)",
                             "Region (old PovcalNet classification)",
-                            "Region (new WB classification, excl. HICs)",
+                            "Region (new WB classification excl. HICs)",
                             "Income group (historical)",
                             "Income group (latest)",
                             "FCV (historical)",
@@ -136,7 +136,7 @@ output$dynamic_sidebar <- renderUI({
                 "Select second group to chart",
                 choices = c("Region (new WB classification)",
                             "Region (old PovcalNet classification)",
-                            "Region (new WB classification, excl. HICs)",
+                            "Region (new WB classification excl. HICs)",
                             "Income group (historical)",
                             "Income group (latest)",
                             "FCV (historical)",
@@ -262,10 +262,10 @@ filtered_data <- reactive({
     group_var <- underscore_var(input$group_var1)
     
     d1 <- merge(d1, cov_flags, by = c(group_var, "year"), all.x = TRUE)
-    d1[cov != 1, headcount := NA_real_]
+    d1[, cov_flag := ifelse(cov == 1, "≥50% coverage", "<50% coverage")]
     
     d0 <- merge(d0, cov_flags, by = c(group_var, "year"), all.x = TRUE)
-    d0[cov != 1, pop_in_pov := NA_real_]
+    d0[, cov_flag := ifelse(cov == 1, "≥50% coverage", "<50% coverage")]
 
   
 
@@ -325,12 +325,12 @@ if (tab == "Compare groups") {
     dA <- merge(dA, cov1, by.x = c("group", "year"),
                      by.y = c(underscore_var(input$group_var1), "year"),
                      all.x = TRUE)
-    dA[cov != 1, `:=`(headcount = NA_real_, pop_in_pov = NA_real_)]
+    dA[, cov_flag := ifelse(cov == 1, "≥50% coverage", "<50% coverage")]
     
     dB <- merge(dB, cov2, by.x = c("group", "year"),
                      by.y = c(underscore_var(input$group_var2), "year"),
                      all.x = TRUE)
-    dB[cov != 1, `:=`(headcount = NA_real_, pop_in_pov = NA_real_)]
+    dB[, cov_flag := ifelse(cov == 1, "≥50% coverage", "<50% coverage")]
 
   
   
@@ -607,28 +607,57 @@ output$main_plot <- renderPlot({
     }
 
     else {
-      p1 <- ggplot(d_list$graph1,
-                   aes(x     = year,
-                       y     = headcount * 100,
-                       color = .data[[underscore_var(input$group_var1)]])) +
-        geom_line(linewidth = 1) +
-        labs(
-          title = paste("Poverty rate by", input$group_var1),
-          y     = "Poverty headcount, %",
-          x     = "") +
-        my_theme(by = input$group_var1)
+      # series var once
+    series_var <- underscore_var(input$group_var1)
+    
+    p1 <- ggplot(d_list$graph1,
+                 aes(x = year, color = .data[[series_var]])) +
+      # solid segments: only where coverage >= 50% (others are NA → line breaks)
+      geom_line(
+        aes(y = ifelse(cov_flag == "≥50% coverage", headcount * 100, NA_real_),
+            linetype = "≥50% coverage"),
+        linewidth = 1, na.rm = TRUE
+      ) +
+      # dashed segments: only where coverage < 50% (others are NA → line breaks)
+      geom_line(
+        aes(y = ifelse(cov_flag == "<50% coverage", headcount * 100, NA_real_),
+            linetype = "<50% coverage"),
+        linewidth = 1, na.rm = TRUE
+      ) +
+      labs(
+        title = paste("Poverty rate by", input$group_var1),
+        y     = "Poverty headcount, %",
+        x     = ""
+      ) +
+      my_theme(by = input$group_var1) +
+      # keep WBG style; ensures the coverage legend shows solid vs dashed
+      scale_linetype_manual(values = c("≥50% coverage" = "solid",
+                                       "<50% coverage" = "dashed")) + 
+        guides(linetype = "none")
 
-
-      p2 <- ggplot(d_list$graph0,
-                   aes(x    = year,
-                       y    = pop_in_pov/1e6,
-                       color = .data[[underscore_var(input$group_var1)]])) +
-        geom_line(linewidth = 1) +
-        labs(
-          title = paste("Number of poor by", input$group_var1),
-          y = "Millions of poor",
-          x = "") +
-        my_theme(by = input$group_var1)
+p2 <- ggplot(d_list$graph0,
+             aes(x = year, color = .data[[series_var]])) +
+  geom_line(
+    aes(y = ifelse(cov_flag == "≥50% coverage", pop_in_pov / 1e6, NA_real_),
+        linetype = "≥50% coverage"),
+    linewidth = 1, na.rm = TRUE
+  ) +
+  geom_line(
+    aes(y = ifelse(cov_flag == "<50% coverage", pop_in_pov / 1e6, NA_real_),
+        linetype = "<50% coverage"),
+    linewidth = 1, na.rm = TRUE
+  ) +
+  labs(
+    title = paste("Number of poor by", input$group_var1),
+    y     = "Millions of poor",
+    x     = ""
+  ) +
+  my_theme(by = input$group_var1) +
+  scale_linetype_manual(
+    values = c("≥50% coverage" = "solid",
+               "<50% coverage" = "dashed")
+  ) + 
+    guides(linetype = "none")
 
       p <- p1 + p2
       last_plot(p)
@@ -701,37 +730,47 @@ output$main_plot <- renderPlot({
     col_map <- setNames(c("#34A7F2", "#4EC2C0"), c(labA, labB))
 
   # Overlay: Poverty rate (%)
-  p_rate <- ggplot(
-    ov,
-    aes(x = year,
-        y = headcount * 100,
-        color = .data[["line_label"]])
+    p_rate <- ggplot(ov, aes(x = year, color = .data[["line_label"]])) +
+  geom_line(
+    aes(y = ifelse(cov_flag == "≥50% coverage", headcount * 100, NA_real_),
+        linetype = "≥50% coverage"),
+    linewidth = 1, na.rm = TRUE
   ) +
-    geom_line(linewidth = 1) +
-    labs(
-      title = "Poverty rate: Compare groups",
-      y     = "Poverty headcount, %",
-      x     = ""
-    ) +
-    my_theme(by = input$group_var1) +
-    scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL))
+  geom_line(
+    aes(y = ifelse(cov_flag == "<50% coverage",  headcount * 100, NA_real_),
+        linetype = "<50% coverage"),
+    linewidth = 1, na.rm = TRUE
+  ) +
+  labs(title = "Poverty rate: Compare groups",
+       y = "Poverty headcount, %",
+       x = "") +
+  my_theme(by = input$group_var1) +
+  scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL)) +
+  scale_linetype_manual(values = c("≥50% coverage" = "solid",
+                                   "<50% coverage" = "dashed")) + 
+    guides(linetype = "none")
 
   # Overlay: Millions of poor
-  p_pop <- ggplot(
-    ov,
-    aes(x = year,
-        y = pop_in_pov / 1e6,
-        color = .data[["line_label"]])
+    p_pop <- ggplot(ov, aes(x = year, color = .data[["line_label"]])) +
+  geom_line(
+    aes(y = ifelse(cov_flag == "≥50% coverage", pop_in_pov / 1e6, NA_real_),
+        linetype = "≥50% coverage"),
+    linewidth = 1, na.rm = TRUE
   ) +
-    geom_line(linewidth = 1) +
-    labs(
-      title = "Millions of poor: Compare groups",
-      y     = "Millions of poor",
-      x     = ""
-    ) +
-    my_theme(by = input$group_var1) +
-    scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL))
-  
+  geom_line(
+    aes(y = ifelse(cov_flag == "<50% coverage",  pop_in_pov / 1e6, NA_real_),
+        linetype = "<50% coverage"),
+    linewidth = 1, na.rm = TRUE
+  ) +
+  labs(title = "Millions of poor: Compare groups",
+       y = "Millions of poor",
+       x = "") +
+  my_theme(by = input$group_var1) +
+  scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL)) +
+  scale_linetype_manual(values = c("≥50% coverage" = "solid",
+                                   "<50% coverage" = "dashed"),)+ 
+    guides(linetype = "none")
+ 
   # Show side-by-side
   p <- p_rate + p_pop
   last_plot(p)
