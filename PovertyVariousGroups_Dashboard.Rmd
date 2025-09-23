@@ -487,7 +487,7 @@ output$download_plot <- downloadHandler(
     # ✅ Apply larger legend styling to both subplots
     p <- p & theme(
       legend.text  = element_text(size = 5.5),
-      legend.title = element_text(size = 5.5)
+      legend.title = element_blank()
     )
 
     ggplot2::ggsave(
