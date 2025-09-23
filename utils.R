@@ -92,6 +92,14 @@ my_theme <- function(by,
         )
     )
 
+    parts <- c(parts, list(
+        scale_x_continuous(
+            limits = c(1981, 2025),
+            breaks = unique(c(1981, pretty(1981:2025, n = 6), 2025)),
+            expand = expansion(mult = c(0, 0))
+        )
+    ))
+
     # Override with manual palettes for region / income
     if (group == "region") {
         parts <- c(parts, list(
