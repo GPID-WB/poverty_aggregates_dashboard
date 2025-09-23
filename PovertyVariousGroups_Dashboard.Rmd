@@ -49,11 +49,11 @@ group_choices <- function(var) {
 ```{r sidebar}
 output$dynamic_sidebar <- renderUI({
   tab <- input$active_tab
-  if (is.null(tab)) tab <- "Poverty Headcount and the Number of Poor"
+  if (is.null(tab)) tab <- "Poverty headcount and the number of poor"
   if (tab == "About") {
     return(NULL)  # no controls on About
       
-  } else if (tab == "Poverty Headcount and the Number of Poor") {
+  } else if (tab == "Poverty headcount and the number of poor") {
     tagList(
       selectInput("group_var1", "Select the group to chart",
                   choices = c("Region (new WB classification)",
@@ -68,7 +68,7 @@ output$dynamic_sidebar <- renderUI({
       uiOutput("group0_ui"),
 
       radioButtons("selected_line",
-                   "Select Poverty Line (2021 PPP)",
+                   "Select poverty line (2021 PPP)",
                    choices  = pl_choices,
                    selected = povertylines[1]),
       tags$hr(),
@@ -110,7 +110,7 @@ output$dynamic_sidebar <- renderUI({
       uiOutput("group2_ui"),
 
       radioButtons("selected_line",
-                   "Select Poverty Line (2021 PPP)",
+                   "Select poverty line (2021 PPP)",
                    choices  = pl_choices,
                    selected = povertylines[1]),
       tags$hr(),
@@ -155,7 +155,7 @@ output$dynamic_sidebar <- renderUI({
 
     # Poverty line + downloads
     radioButtons("selected_line",
-                 "Select Poverty Line (2021 PPP)",
+                 "Select poverty line (2021 PPP)",
                  choices  = pl_choices,
                  selected = povertylines[1]),
     tags$hr(),
@@ -229,7 +229,7 @@ output$overlay2_value_ui <- renderUI({
 ```{r filtered-data}
 # ---- filtered data for figures ----
 filtered_data <- reactive({
-  tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
+  tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
   req(input$group_var1, input$selected_line)
   
   # make underscore
@@ -362,8 +362,8 @@ output$download_filtered <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".csv")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
-    data <- if (tab == "Poverty Headcount and the Number of Poor") {
+    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+    data <- if (tab == "Poverty headcount and the number of poor") {
       d1 <- filtered_data()$graph1
       d0 <- filtered_data()$graph0
       gv <- underscore_var(input$group_var1)
@@ -392,8 +392,8 @@ output$download_filtered_csv <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".csv")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
-    data <- if (tab == "Poverty Headcount and the Number of Poor") {
+    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+    data <- if (tab == "Poverty headcount and the number of poor") {
       d1 <- filtered_data()$graph1
       d0 <- filtered_data()$graph0
       gv <- underscore_var(input$group_var1)
@@ -423,8 +423,8 @@ output$download_filtered_dta <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".dta")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
-    data <- if (tab == "Poverty Headcount and the Number of Poor") {
+    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+    data <- if (tab == "Poverty headcount and the number of poor") {
       d1 <- filtered_data()$graph1
       d0 <- filtered_data()$graph0
       gv <- underscore_var(input$group_var1)
@@ -452,8 +452,8 @@ output$download_filtered_excel <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".xlsx")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty Headcount and the Number of Poor" else input$active_tab
-    data <- if (tab == "Poverty Headcount and the Number of Poor") {
+    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+    data <- if (tab == "Poverty headcount and the number of poor") {
       d1 <- filtered_data()$graph1
       d0 <- filtered_data()$graph0
       gv <- underscore_var(input$group_var1)
@@ -521,7 +521,7 @@ tabsetPanel(
   id   = "active_tab",
   type = "tabs",
 
-  tabPanel("Poverty Headcount and the Number of Poor"),
+  tabPanel("Poverty headcount and the number of poor"),
   
   tabPanel("Compare groups"),
   
@@ -606,7 +606,7 @@ output$main_plot <- renderPlot({
     
   d_list <- filtered_data()
 
-  if (input$active_tab == "Poverty Headcount and the Number of Poor") {
+  if (input$active_tab == "Poverty headcount and the number of poor") {
 
     if (fnrow(d_list$graph1) == 0 & fnrow(d_list$graph2) == 0) {
       ggplot() +
@@ -638,7 +638,7 @@ output$main_plot <- renderPlot({
         linewidth = 1, na.rm = TRUE
       ) +
       labs(
-        title = paste("Poverty rate by", input$group_var1),
+        title = paste("Poverty rate by", tolower(input$group_var1)),
         y     = "Poverty headcount, %",
         x     = ""
       ) +
@@ -661,7 +661,7 @@ p2 <- ggplot(d_list$graph0,
     linewidth = 1, na.rm = TRUE
   ) +
   labs(
-    title = paste("Number of poor by", input$group_var1),
+    title = paste("Number of poor by", tolower(input$group_var1)),
     y     = "Millions of poor",
     x     = ""
   ) +
@@ -699,7 +699,7 @@ p2 <- ggplot(d_list$graph0,
                        color = .data[[underscore_var(input$group_var1)]])) +
         geom_line(linewidth = 1) +
         labs(
-          title = paste("Poverty rate by", input$group_var1),
+          title = paste("Poverty rate by", tolower(input$group_var1)),
           y     = "Poverty headcount, %",
           x     = "") +
         my_theme(by = input$group_var1) 
@@ -711,7 +711,7 @@ p2 <- ggplot(d_list$graph0,
                        color = .data[[underscore_var(input$group_var2)]])) +
         geom_line(linewidth = 1) +
         labs(
-          title = paste("Poverty rate by", input$group_var2),
+          title = paste("Poverty rate by", tolower(input$group_var2)),
           y     = "Poverty headcount, %",
           x     = "") +
         my_theme(by = input$group_var2) 
@@ -754,7 +754,7 @@ p2 <- ggplot(d_list$graph0,
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
-  labs(title = "Poverty rate: Compare groups",
+  labs(title = "Poverty rate",
        y = "Poverty headcount, %",
        x = "") +
   my_theme(by = input$group_var1) +
@@ -775,7 +775,7 @@ p2 <- ggplot(d_list$graph0,
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
-  labs(title = "Millions of poor: Compare groups",
+  labs(title = "Millions of poor",
        y = "Millions of poor",
        x = "") +
   my_theme(by = input$group_var1) +
