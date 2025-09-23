@@ -231,6 +231,15 @@ filtered_data <- reactive({
 
   dt <- country_data[poverty_line == as.numeric(input$selected_line)]
 
+    # Add coverage flag based on selected group_var1
+    cov_flags <- region_coverage_flag(dt, input$group_var1)
+    
+    # Determine which group_var1 column name to use
+    gv1 <- underscore_var(input$group_var1)
+    
+    # Merge cov flag back
+    dt <- merge(dt, cov_flags, by = c(gv1, "year"), all.x = TRUE)
+
   # ---- selections for group_var1
   # On the first tab, use group0 checkboxes; on Compare Groups (Side-by-Side), use group1 checkboxes.
   sel_g1 <- if (tab == "Compare Groups (Side-by-Side)") input$group1_values else input$group0_values
@@ -249,6 +258,16 @@ filtered_data <- reactive({
     .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
     by = c("year", gv1)
   ]
+
+    group_var <- underscore_var(input$group_var1)
+    
+    d1 <- merge(d1, cov_flags, by = c(group_var, "year"), all.x = TRUE)
+    d1[cov != 1, headcount := NA_real_]
+    
+    d0 <- merge(d0, cov_flags, by = c(group_var, "year"), all.x = TRUE)
+    d0[cov != 1, pop_in_pov := NA_real_]
+
+  
 
   # ---- d2: only needed on Compare Groups (Side-by-Side); otherwise return empty DT
   if (tab == "Compare Groups (Side-by-Side)") {
@@ -297,7 +316,24 @@ if (tab == "Compare groups") {
     line_label = paste0(input$group_var2, ": ", input$overlay2_value)
 
   )]
+  
+  # --- coverage gaps for overlay (no dropping rows)
+    cov1 <- region_coverage_flag(dt, input$group_var1)
+    cov2 <- region_coverage_flag(dt, input$group_var2)
+    
+    # merge by the displayed label column ("group") and year
+    dA <- merge(dA, cov1, by.x = c("group", "year"),
+                     by.y = c(underscore_var(input$group_var1), "year"),
+                     all.x = TRUE)
+    dA[cov != 1, `:=`(headcount = NA_real_, pop_in_pov = NA_real_)]
+    
+    dB <- merge(dB, cov2, by.x = c("group", "year"),
+                     by.y = c(underscore_var(input$group_var2), "year"),
+                     all.x = TRUE)
+    dB[cov != 1, `:=`(headcount = NA_real_, pop_in_pov = NA_real_)]
 
+  
+  
   overlay <- rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
 
   return(list(graph0 = d0, graph1 = d1, graph2 = d2, graph_overlay = overlay))
@@ -337,7 +373,9 @@ output$download_filtered <- downloadHandler(
     } else if (tab == "Compare groups") {
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
-  }
+    }
+    data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+
     write.csv(data, file, row.names = FALSE)
   }
 )
@@ -366,7 +404,9 @@ output$download_filtered_csv <- downloadHandler(
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
 
-  }
+    }
+    data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+
     write.csv(data, file, row.names = FALSE)
   }
 )
@@ -394,7 +434,8 @@ output$download_filtered_dta <- downloadHandler(
     } else if (tab == "Compare groups") {
     data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
     }
-    
+    data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+
     haven::write_dta(as.data.frame(data), file)
   }
 )
@@ -424,7 +465,8 @@ output$download_filtered_excel <- downloadHandler(
   } else if (tab == "Compare groups") {       
     data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
   }
-    
+    data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+
     writexl::write_xlsx(as.data.frame(data), file)
   }
 )

@@ -28,6 +28,12 @@ class_data <- read_dta(
 pip_pop <- read_dta("data/pip_population_20250930_2021_01_02_PROD.dta") %>%
     filter(country_code == "ARG" & data_level == "national")
 
+# Coverage data
+pip_cov <- read_dta("data/pip_country_coverage.dta") %>%
+    select(country_code, year, coverage) %>%
+    rename(iso3c = country_code) %>%
+    distinct(iso3c, year, .keep_all = TRUE)
+
 # Define old poverty regions
 
 reg_old <- get_aux("country_list") %>%
@@ -60,6 +66,10 @@ country_data <- country_data %>%
         )
     )
 
+# Merge with coverage information
+country_data <- country_data %>%
+    left_join(pip_cov, by = c("iso3c", "year"))
+
 # (RECOVER AFTER UPDATE) Extract data directly from PIP
 country_data_old <- purrr::map_df(
     .x = povertylines,
@@ -74,7 +84,6 @@ country_data_old <- purrr::map_df(
     select(region, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
     mutate(pop_in_pov = headcount * pop) %>%
     rename(region_name = region)
-
 
 
 # write

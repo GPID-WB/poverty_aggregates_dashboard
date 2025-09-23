@@ -153,6 +153,24 @@ scale_income_fill_manual <- function(drop = FALSE) {
 }
 
 
+# Coverage set up
+
+region_coverage_flag <- function(dt, group_var = "region_name") {
+    dt <- as.data.table(dt)
+    group_var <- underscore_var(group_var)
+
+    # Dynamically reference group_var column
+    tot_pop_dt <- dt[, .(tot_pop = sum(pop, na.rm = TRUE)), by = c(group_var, "year")]
+    cov_pop_dt <- dt[coverage == TRUE, .(cov_pop = sum(pop, na.rm = TRUE)), by = c(group_var, "year")]
+
+    cov_flag_dt <- merge(tot_pop_dt, cov_pop_dt, by = c(group_var, "year"), all.x = TRUE)
+    cov_flag_dt[, pop_share := cov_pop / tot_pop]
+    cov_flag_dt[, cov := as.integer(pop_share >= 0.5)]
+
+    # Return only needed columns
+    cov_flag_dt[, .SD, .SDcols = c(group_var, "year", "cov")]
+}
+
 
 
 
