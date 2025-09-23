@@ -26,6 +26,13 @@ library(wbplot)
 
 ```{r load-init}
 povertylines <- c(3.00, 4.20, 8.30)
+
+# Pretty labels for the UI; values remain the same as `povertylines`
+pl_choices <- setNames(
+  povertylines,
+  sub("\\.00$", "", sprintf("$%.2f/day", povertylines))  # "$3/day", "$4.20/day", "$8.30/day"
+)
+
 path_fst <- fs::path(here::here(), "country_data.fst")
 country_data <-
   fst::read_fst(path          = path_fst, 
@@ -62,7 +69,7 @@ output$dynamic_sidebar <- renderUI({
 
       radioButtons("selected_line",
                    "Select Poverty Line (2021 PPP)",
-                   choices  = povertylines,
+                   choices  = pl_choices,
                    selected = povertylines[1]),
       tags$hr(),
       downloadButton("download_filtered_csv",  "Download CSV",         class = "btn-sm"),
@@ -104,7 +111,7 @@ output$dynamic_sidebar <- renderUI({
 
       radioButtons("selected_line",
                    "Select Poverty Line (2021 PPP)",
-                   choices  = povertylines,
+                   choices  = pl_choices,
                    selected = povertylines[1]),
       tags$hr(),
       downloadButton("download_filtered_csv",  "Download CSV",         class = "btn-sm"),
@@ -149,7 +156,7 @@ output$dynamic_sidebar <- renderUI({
     # Poverty line + downloads
     radioButtons("selected_line",
                  "Select Poverty Line (2021 PPP)",
-                 choices  = povertylines,
+                 choices  = pl_choices,
                  selected = povertylines[1]),
     tags$hr(),
     downloadButton("download_filtered_csv",   "Download CSV",          class = "btn-sm"),
