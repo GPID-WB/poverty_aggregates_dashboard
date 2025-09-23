@@ -61,7 +61,7 @@ country_data <- read_dta("data/pip_fillgaps_20250930_2021_01_02_PROD.dta") %>%
 country_data <- country_data %>%
     mutate(
         region_WDI = case_when(
-            incgroup_current != "High income" ~ paste0(region_name, " (excluding HICs)"),
+            incgroup_current != "High income" ~ paste0(region_name, " (excl. HICs)"),
             TRUE ~ NA_character_
         )
     )
