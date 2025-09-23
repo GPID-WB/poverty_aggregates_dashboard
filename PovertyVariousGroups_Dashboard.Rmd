@@ -445,28 +445,53 @@ output$download_filtered_dta <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".dta")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
-    data <- if (tab == "Poverty headcount and the number of poor") {
-      d1 <- filtered_data()$graph1
-      d0 <- filtered_data()$graph0
-      gv <- underscore_var(input$group_var1)
-      merge(d1, d0, by = c("year", gv), all = TRUE)
-      
-    } else if (tab == "Compare Groups (Side-by-Side)") {
-      d1  <- filtered_data()$graph1
-      d2  <- filtered_data()$graph2
-      gv1 <- underscore_var(input$group_var1)
-      gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      rbindlist(list(d1, d2), fill = TRUE)
-    } else if (tab == "Compare groups") {
-    data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
-    }
-    data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+  tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+  pl  <- as.numeric(input$selected_line)
 
-    haven::write_dta(as.data.frame(data), file)
+  data <- if (tab == "Poverty headcount and the number of poor") {
+    d1 <- filtered_data()$graph1   # year, gv1, headcount (0–1)
+    d0 <- filtered_data()$graph0   # year, gv1, pop_in_pov
+    gv <- underscore_var(input$group_var1)
+
+    merge(d1, d0, by = c("year", gv), all = TRUE)[
+      , .(
+        year,
+        group_definition     = input$group_var1,
+        group_classification = get(gv),
+        poverty_line         = pl,
+        headcount            = headcount,
+        pop_in_poverty       = pop_in_pov
+      )
+    ]
+
+  } else if (tab == "Compare Groups (Side-by-Side)") {
+    # leave behavior unchanged (no Side-by-Side restructure requested)
+    d1  <- filtered_data()$graph1
+    d2  <- filtered_data()$graph2
+    gv1 <- underscore_var(input$group_var1)
+    gv2 <- underscore_var(input$group_var2)
+    if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+    if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+    rbindlist(list(d1, d2), fill = TRUE)
+
+  } else if (tab == "Compare groups") {
+    ov <- filtered_data()$graph_overlay
+    ov[
+      , .(
+        year,
+        group_definition     = definition,
+        group_classification = group,
+        poverty_line         = pl,
+        headcount            = headcount,
+        pop_in_poverty       = pop_in_pov
+      )
+    ]
   }
+
+  data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+  haven::write_dta(as.data.frame(data), file)
+}
+
 )
 
 output$download_filtered_excel <- downloadHandler(
@@ -474,30 +499,53 @@ output$download_filtered_excel <- downloadHandler(
     paste0("filtered_data_", Sys.Date(), ".xlsx")
   },
   content = function(file) {
-    tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
-    data <- if (tab == "Poverty headcount and the number of poor") {
-      d1 <- filtered_data()$graph1
-      d0 <- filtered_data()$graph0
-      gv <- underscore_var(input$group_var1)
-      merge(d1, d0, by = c("year", gv), all = TRUE)
-      
-    } else if (tab == "Compare Groups (Side-by-Side)") {
-      d1  <- filtered_data()$graph1
-      d2  <- filtered_data()$graph2
-      gv1 <- underscore_var(input$group_var1)
-      gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      rbindlist(list(d1, d2), fill = TRUE)
-    
-      
-  } else if (tab == "Compare groups") {       
-    data <- filtered_data()$graph_overlay[, .(year, group, definition, headcount, pop_in_pov)]
-  }
-    data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+  tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
+  pl  <- as.numeric(input$selected_line)
 
-    writexl::write_xlsx(as.data.frame(data), file)
+  data <- if (tab == "Poverty headcount and the number of poor") {
+    d1 <- filtered_data()$graph1   # year, gv1, headcount (0–1)
+    d0 <- filtered_data()$graph0   # year, gv1, pop_in_pov
+    gv <- underscore_var(input$group_var1)
+
+    merge(d1, d0, by = c("year", gv), all = TRUE)[
+      , .(
+        year,
+        group_definition     = input$group_var1,
+        group_classification = get(gv),
+        poverty_line         = pl,
+        headcount            = headcount,
+        pop_in_poverty       = pop_in_pov
+      )
+    ]
+
+  } else if (tab == "Compare Groups (Side-by-Side)") {
+    # leave behavior unchanged (no Side-by-Side restructure requested)
+    d1  <- filtered_data()$graph1
+    d2  <- filtered_data()$graph2
+    gv1 <- underscore_var(input$group_var1)
+    gv2 <- underscore_var(input$group_var2)
+    if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
+    if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
+    rbindlist(list(d1, d2), fill = TRUE)
+
+  } else if (tab == "Compare groups") {
+    ov <- filtered_data()$graph_overlay
+    ov[
+      , .(
+        year,
+        group_definition     = definition,
+        group_classification = group,
+        poverty_line         = pl,
+        headcount            = headcount,
+        pop_in_poverty       = pop_in_pov
+      )
+    ]
   }
+
+  data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+  writexl::write_xlsx(as.data.frame(data), file)
+}
+
 )
 
 output$download_plot <- downloadHandler(
