@@ -396,21 +396,35 @@ output$download_filtered_csv <- downloadHandler(
   pl  <- as.numeric(input$selected_line)
 
   data <- if (tab == "Poverty headcount and the number of poor") {
-    d1 <- filtered_data()$graph1   # year, gv1, headcount (0-1)
-    d0 <- filtered_data()$graph0   # year, gv1, pop_in_pov
-    gv1 <- underscore_var(input$group_var1)
+  d1 <- filtered_data()$graph1   # year, gv1, headcount (0–1), cov_flag present
+  d0 <- filtered_data()$graph0   # year, gv1, pop_in_pov, cov_flag present
+  gv1 <- underscore_var(input$group_var1)
 
-    merge(d1, d0, by = c("year", gv1), all = TRUE)[
-      , .(
-        year,
-        group_definition   = input$group_var1,
-        group_classification = get(gv1),
-        poverty_line       = pl,
-        headcount          = headcount,   
-        pop_in_poverty     = round(pop_in_pov)
-      )
-    ]
-      
+  tmp <- merge(d1, d0, by = c("year", gv1), all = TRUE)
+
+  # prefer a single coverage flag after merge (cov_flag.x / cov_flag.y)
+  if (!("cov_flag" %in% names(tmp))) {
+    tmp[, cov_flag := fifelse(!is.na(cov_flag.x), cov_flag.x, cov_flag.y)]
+  }
+
+  # compute estimate_type based on year and coverage
+  tmp[, estimate_type := fifelse(
+    year == 2025, "nowcast",
+    fifelse(cov_flag == "≥50% coverage", "actual", "projection")
+  )]
+
+  tmp[
+    , .(
+      year,
+      group_definition     = input$group_var1,
+      group_classification = get(gv1),
+      poverty_line         = pl,
+      headcount            = headcount,         # keep scale 0–1
+      pop_in_poverty       = round(pop_in_pov), # integer
+      estimate_type        = estimate_type
+    )
+  ]
+
     } else if (tab == "Compare Groups (Side-by-Side)"){
       d1  <- filtered_data()$graph1
       d2  <- filtered_data()$graph2
@@ -420,19 +434,27 @@ output$download_filtered_csv <- downloadHandler(
       if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
       rbindlist(list(d1, d2), fill = TRUE)
      
-    } else if (tab == "Compare groups") {
+} else if (tab == "Compare groups") {
   ov <- filtered_data()$graph_overlay
-  data <- ov[
+  ov[
+    # estimate_type from year + cov_flag (already merged in overlay)
+    , estimate_type := fifelse(
+        year == 2025, "nowcast",
+        fifelse(cov_flag == "≥50% coverage", "actual", "projection")
+      )
+  ][
     , .(
       year,
       group_definition     = definition,
       group_classification = group,
       poverty_line         = pl,
-      headcount            = headcount,    # keep scale as-is (0–1)
-      pop_in_poverty       = round(pop_in_pov)
+      headcount            = headcount,          # 0–1
+      pop_in_poverty       = round(pop_in_pov),  # integer
+      estimate_type        = estimate_type
     )
   ]
 }
+
 
     data <- data[, !startsWith(names(data), "cov"), with = FALSE]
 
@@ -449,20 +471,34 @@ output$download_filtered_dta <- downloadHandler(
   pl  <- as.numeric(input$selected_line)
 
   data <- if (tab == "Poverty headcount and the number of poor") {
-    d1 <- filtered_data()$graph1
-    d0 <- filtered_data()$graph0
-    gv <- underscore_var(input$group_var1)
+  d1 <- filtered_data()$graph1   # has cov_flag
+  d0 <- filtered_data()$graph0   # has cov_flag
+  gv <- underscore_var(input$group_var1)
 
-    merge(d1, d0, by = c("year", gv), all = TRUE)[
-      , .(
-        year,
-        group_definition     = input$group_var1,
-        group_classification = get(gv),
-        poverty_line         = pl,
-        headcount            = headcount,
-        pop_in_poverty       = round(pop_in_pov)
-      )
-    ]
+  tmp <- merge(d1, d0, by = c("year", gv), all = TRUE)
+
+  # unify coverage flag after merge
+  if (!("cov_flag" %in% names(tmp))) {
+    tmp[, cov_flag := fifelse(!is.na(cov_flag.x), cov_flag.x, cov_flag.y)]
+  }
+
+  # estimate_type: 2025 => nowcast; ≥50% => actual; else projection
+  tmp[, estimate_type := fifelse(
+    year == 2025, "nowcast",
+    fifelse(cov_flag == "≥50% coverage", "actual", "projection")
+  )]
+
+  tmp[
+    , .(
+      year,
+      group_definition     = input$group_var1,
+      group_classification = get(gv),
+      poverty_line         = pl,
+      headcount            = headcount,
+      pop_in_poverty       = round(pop_in_pov),
+      estimate_type        = estimate_type
+    )
+  ]
 
   } else if (tab == "Compare Groups (Side-by-Side)") {
     d1  <- filtered_data()$graph1
@@ -474,18 +510,25 @@ output$download_filtered_dta <- downloadHandler(
     rbindlist(list(d1, d2), fill = TRUE)
 
   } else if (tab == "Compare groups") {
-    ov <- filtered_data()$graph_overlay
-    ov[
-      , .(
-        year,
-        group_definition     = definition,
-        group_classification = group,
-        poverty_line         = pl,
-        headcount            = headcount,
-        pop_in_poverty       = round(pop_in_pov)
+  ov <- filtered_data()$graph_overlay
+  ov[
+    , estimate_type := fifelse(
+        year == 2025, "nowcast",
+        fifelse(cov_flag == "≥50% coverage", "actual", "projection")
       )
-    ]
-  }
+  ][
+    , .(
+      year,
+      group_definition     = definition,
+      group_classification = group,
+      poverty_line         = pl,
+      headcount            = headcount,
+      pop_in_poverty       = round(pop_in_pov),
+      estimate_type        = estimate_type
+    )
+  ]
+}
+
 
   # drop coverage columns if present
   data <- data[, !startsWith(names(data), "cov"), with = FALSE]
@@ -493,15 +536,16 @@ output$download_filtered_dta <- downloadHandler(
   # add estimate_type if not present yet
   if (!("estimate_type" %in% names(data))) data[, estimate_type := NA_character_]
 
-  # optional tidy column order
-  desired <- c("year",
-               "group_definition",
-               "group_classification",
-               "poverty_line",
-               "headcount",
-               "pop_in_poverty")
-  keep <- intersect(desired, names(data))
-  data <- data[, ..keep]
+    desired <- c("year",
+                 "group_definition",
+                 "group_classification",
+                 "poverty_line",
+                 "headcount",
+                 "pop_in_poverty",
+                 "estimate_type")
+    keep <- intersect(desired, names(data))
+    data <- data[, ..keep]
+
 
   # set Stata variable labels via haven
   attr(data$group_definition,     "label") <- "Type of the group"
@@ -509,6 +553,8 @@ output$download_filtered_dta <- downloadHandler(
   attr(data$poverty_line,         "label") <- "Poverty threshold in daily per capita 2021 PPPs"
   attr(data$headcount,            "label") <- "Poverty headcount rate in daily per capita 2021 PPPs"
   attr(data$pop_in_poverty,       "label") <- "Number of poor"
+  attr(data$estimate_type, "label") <- "Type of estimate: actual, projection, nowcast"
+
 
   haven::write_dta(as.data.frame(data), file)
 }
@@ -523,21 +569,36 @@ output$download_filtered_excel <- downloadHandler(
   tab <- if (is.null(input$active_tab)) "Poverty headcount and the number of poor" else input$active_tab
   pl  <- as.numeric(input$selected_line)
 
-  data <- if (tab == "Poverty headcount and the number of poor") {
-    d1 <- filtered_data()$graph1   # year, gv1, headcount (0–1)
-    d0 <- filtered_data()$graph0   # year, gv1, pop_in_pov
-    gv <- underscore_var(input$group_var1)
+data <- if (tab == "Poverty headcount and the number of poor") {
+  d1 <- filtered_data()$graph1   # has cov_flag
+  d0 <- filtered_data()$graph0   # has cov_flag
+  gv <- underscore_var(input$group_var1)
 
-    merge(d1, d0, by = c("year", gv), all = TRUE)[
-      , .(
-        year,
-        group_definition     = input$group_var1,
-        group_classification = get(gv),
-        poverty_line         = pl,
-        headcount            = headcount,
-        pop_in_poverty       = round(pop_in_pov)
-      )
-    ]
+  tmp <- merge(d1, d0, by = c("year", gv), all = TRUE)
+
+  # unify coverage flag after merge (cov_flag.x / cov_flag.y)
+  if (!("cov_flag" %in% names(tmp))) {
+    tmp[, cov_flag := fifelse(!is.na(cov_flag.x), cov_flag.x, cov_flag.y)]
+  }
+
+  # estimate_type: 2025 => nowcast; ≥50% => actual; else projection
+  tmp[, estimate_type := fifelse(
+    year == 2025, "nowcast",
+    fifelse(cov_flag == "≥50% coverage", "actual", "projection")
+  )]
+
+  tmp[
+    , .(
+      year,
+      group_definition     = input$group_var1,
+      group_classification = get(gv),
+      poverty_line         = pl,
+      headcount            = headcount,
+      pop_in_poverty       = round(pop_in_pov),
+      estimate_type        = estimate_type
+    )
+  ]
+
 
   } else if (tab == "Compare Groups (Side-by-Side)") {
     # leave behavior unchanged (no Side-by-Side restructure requested)
@@ -549,19 +610,25 @@ output$download_filtered_excel <- downloadHandler(
     if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
     rbindlist(list(d1, d2), fill = TRUE)
 
-  } else if (tab == "Compare groups") {
-    ov <- filtered_data()$graph_overlay
-    ov[
-      , .(
-        year,
-        group_definition     = definition,
-        group_classification = group,
-        poverty_line         = pl,
-        headcount            = headcount,
-        pop_in_poverty       = round(pop_in_pov)
+} else if (tab == "Compare groups") {
+  ov <- filtered_data()$graph_overlay
+  ov[
+    , estimate_type := fifelse(
+        year == 2025, "nowcast",
+        fifelse(cov_flag == "≥50% coverage", "actual", "projection")
       )
-    ]
-  }
+  ][
+    , .(
+      year,
+      group_definition     = definition,
+      group_classification = group,
+      poverty_line         = pl,
+      headcount            = headcount,
+      pop_in_poverty       = round(pop_in_pov),
+      estimate_type        = estimate_type
+    )
+  ]
+}
 
   data <- data[, !startsWith(names(data), "cov"), with = FALSE]
   writexl::write_xlsx(as.data.frame(data), file)
