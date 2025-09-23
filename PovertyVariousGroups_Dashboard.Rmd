@@ -573,7 +573,13 @@ conditionalPanel(
   tagList(
     plotOutput("main_plot", height = "auto"),
     div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
-        "Source: Poverty and Inequality Platform (September 2025)"
+      HTML(
+        "Source: Poverty and Inequality Platform (September 2025)<br>",
+         "Note: Line style reflects data coverage within each group and year. ",
+        "<em>Coverage</em> is the share of the group’s total population represented by country-year observations available in PIP for that year. ",
+        "Solid segments (≥ 50% coverage) indicate that at least half of the population is covered; ",
+        "dashed segments (&lt; 50% coverage) indicate limited coverage and should be interpreted with caution. "
+      )
     )
   )
 )
