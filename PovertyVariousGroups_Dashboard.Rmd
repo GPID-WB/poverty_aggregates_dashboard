@@ -449,8 +449,8 @@ output$download_filtered_dta <- downloadHandler(
   pl  <- as.numeric(input$selected_line)
 
   data <- if (tab == "Poverty headcount and the number of poor") {
-    d1 <- filtered_data()$graph1   # year, gv1, headcount (0–1)
-    d0 <- filtered_data()$graph0   # year, gv1, pop_in_pov
+    d1 <- filtered_data()$graph1
+    d0 <- filtered_data()$graph0
     gv <- underscore_var(input$group_var1)
 
     merge(d1, d0, by = c("year", gv), all = TRUE)[
@@ -465,7 +465,6 @@ output$download_filtered_dta <- downloadHandler(
     ]
 
   } else if (tab == "Compare Groups (Side-by-Side)") {
-    # leave behavior unchanged (no Side-by-Side restructure requested)
     d1  <- filtered_data()$graph1
     d2  <- filtered_data()$graph2
     gv1 <- underscore_var(input$group_var1)
@@ -488,7 +487,29 @@ output$download_filtered_dta <- downloadHandler(
     ]
   }
 
+  # drop coverage columns if present
   data <- data[, !startsWith(names(data), "cov"), with = FALSE]
+
+  # add estimate_type if not present yet
+  if (!("estimate_type" %in% names(data))) data[, estimate_type := NA_character_]
+
+  # optional tidy column order
+  desired <- c("year",
+               "group_definition",
+               "group_classification",
+               "poverty_line",
+               "headcount",
+               "pop_in_poverty")
+  keep <- intersect(desired, names(data))
+  data <- data[, ..keep]
+
+  # set Stata variable labels via haven
+  attr(data$group_definition,     "label") <- "Type of the group"
+  attr(data$group_classification, "label") <- "Classification within the group"
+  attr(data$poverty_line,         "label") <- "Poverty threshold in daily per capita 2021 PPPs"
+  attr(data$headcount,            "label") <- "Poverty headcount rate in daily per capita 2021 PPPs"
+  attr(data$pop_in_poverty,       "label") <- "Number of poor"
+
   haven::write_dta(as.data.frame(data), file)
 }
 
