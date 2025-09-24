@@ -796,7 +796,7 @@ output$main_plot <- renderPlot({
         linewidth = 1, na.rm = TRUE
       ) +
       labs(
-        title = paste("Poverty rate by", tolower(input$group_var1)),
+        title = paste("Poverty rate by", label_keep_case(input$group_var1)),
         y     = "Poverty headcount, %",
         x     = ""
       ) +
@@ -819,7 +819,7 @@ p2 <- ggplot(d_list$graph0,
     linewidth = 1, na.rm = TRUE
   ) +
   labs(
-    title = paste("Number of poor by", tolower(input$group_var1)),
+    title = paste("Number of poor by", label_keep_case(input$group_var1)),
     y     = "Millions of poor",
     x     = ""
   ) +

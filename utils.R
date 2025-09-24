@@ -192,6 +192,12 @@ region_coverage_flag <- function(dt, group_var = "region_name") {
     cov_flag_dt[, .SD, .SDcols = c(group_var, "year", "cov")]
 }
 
-
+# Keep capitalization for FCV/IDA labels on Tab 1; lowercase others
+label_keep_case <- function(x) {
+    if (is.null(x)) return("")
+    keep <- c("FCV (historical)", "FCV (latest)",
+              "IDA (historical)", "IDA (latest)")
+    if (x %chin% keep) x else tolower(x)
+}
 
 
