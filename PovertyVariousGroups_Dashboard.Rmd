@@ -933,7 +933,7 @@ p2 <- ggplot(d_list$graph0,
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
-  labs(title = "Millions of poor",
+  labs(title = "Number of poor",
        y = "Millions of poor",
        x = "") +
   my_theme(by = input$group_var1) +
