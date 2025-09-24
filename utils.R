@@ -25,9 +25,9 @@ underscore_var <- function(cn) {
     if (is.null(cn)) return(NULL)
 
     dplyr::recode(cn,
-                  "Region (new WB classification)" = "region_name",
+                  "Region (new classification)" = "region_name",
                   "Region (old PovcalNet classification)"     = "region_old",
-                  "Region (new WB classification excl. HICs)" = "region_WDI",
+                  "Region (new classification excl. HICs)" = "region_WDI",
                   "Income group (historical)" = "incgroup_historical",
                   "Income group (latest)"    = "incgroup_current",
                   "FCV (historical)"      = "fcv_historical",
