@@ -43,7 +43,7 @@ my_theme <- function(by,
                      base_size   = 5,
                      legend      = c("bottom", "top", "left", "right", "none"),
                      drop        = FALSE,
-                     legend_nrow = 3) {
+                     legend_nrow = 4) {
     legend <- match.arg(legend)
 
     # Map `by` to region / income / other
@@ -86,10 +86,14 @@ my_theme <- function(by,
             guide  = guide_legend(title = NULL)
         ),
         guides(
-            color = guide_legend(nrow = legend_nrow, byrow = TRUE),
-            fill  = guide_legend(nrow = legend_nrow, byrow = TRUE),
-            linetype = guide_legend(nrow = legend_nrow, byrow = TRUE)
+            color    = guide_legend(nrow = legend_nrow, byrow = TRUE,
+                                    label.theme = element_text(margin = margin(r = 40))),
+            fill     = guide_legend(nrow = legend_nrow, byrow = TRUE,
+                                    label.theme = element_text(margin = margin(r = 40))),
+            linetype = guide_legend(nrow = legend_nrow, byrow = TRUE,
+                                    label.theme = element_text(margin = margin(r = 40)))
         )
+
     )
 
     parts <- c(parts, list(
