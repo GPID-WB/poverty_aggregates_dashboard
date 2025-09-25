@@ -42,6 +42,13 @@ group_choices <- function(var) {
     var  <- underscore_var(var)
     vals <- country_data[[var]]
     vals <- vals[!is.na(vals)]
+    
+      # Hide the "no definition" bucket for FCV historical
+  if (var %chin% c("fcv_historical", "ida_historical")) {
+    bad <- c("")
+    vals <- vals[!vals %chin% bad]
+  }
+    
     sort(funique(vals))
 }
 ```
@@ -238,6 +245,21 @@ filtered_data <- reactive({
 
   dt <- country_data[poverty_line == as.numeric(input$selected_line)]
 
+  # Hide FCV(historical) "no definition" group in the data used for charts
+    bad <- c("")
+    
+    gv1 <- underscore_var(input$group_var1)
+    if (gv1 %chin% c("fcv_historical", "ida_historical")) {
+      dt <- dt[!is.na(get(gv1)) & !(get(gv1) %chin% bad)]
+    }
+    
+    if (!is.null(input$group_var2)) {
+      gv2 <- underscore_var(input$group_var2)
+      if (gv2 %chin% c("fcv_historical", "ida_historical")) {
+        dt <- dt[!is.na(get(gv2)) & !(get(gv2) %chin% bad)]
+      }
+    }
+      
     # Add coverage flag based on selected group_var1
     cov_flags <- region_coverage_flag(dt, input$group_var1)
     

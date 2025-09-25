@@ -18,9 +18,9 @@ povertylines <- c(3.00, 4.20, 8.30)
 class_data <- read_dta(
     "https://raw.githubusercontent.com/GPID-WB/Class/6e6123c1e5f1eea1636dd99f387aa98517d1ac7f/OutputData/CLASS.dta"
 ) %>%
-    select(year_release, economy, code, region, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
+    select(year_data, economy, code, region, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
     rename(iso3c = code,
-           year = year_release) %>%
+           year = year_data) %>%
     mutate(iso3c = trimws(toupper(iso3c)))
 
 # Population data: for Argentina
