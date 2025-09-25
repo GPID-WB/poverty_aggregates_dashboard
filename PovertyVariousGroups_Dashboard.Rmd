@@ -109,48 +109,6 @@ output$dynamic_sidebar <- renderUI({
     )
   }
 
-  else if (tab == "Compare Groups (Side-by-Side)") {
-    tagList(
-      selectInput("group_var1",
-                  "Select group for figure 1",
-                  choices = c("Region (new classification)",
-                              "Region (old PovcalNet classification)",
-                              "Region (new classification excl. HICs)",
-                              "Income group (historical)",
-                              "Income group (latest)",
-                              "FCV (historical)",
-                              "FCV (latest)",
-                              "IDA (historical)",
-                              "IDA (latest)"),
-                  selected = "Region (new classification)"),
-      uiOutput("group1_ui"),
-
-      selectInput("group_var2",
-                  "Select group for figure 2",
-                  choices = c("Region (new classification)",
-                              "Region (old PovcalNet classification)",
-                              "Region (new classification excl. HICs)",
-                              "Income group (historical)",
-                              "Income group (latest)",
-                              "FCV (historical)",
-                              "FCV (latest)",
-                              "IDA (historical)",
-                              "IDA (latest)"),
-                  selected = "Region (old PovcalNet classification)"),
-      uiOutput("group2_ui"),
-
-      radioButtons("selected_line",
-                   "Select poverty line (2021 PPP)",
-                   choices  = pl_choices,
-                   selected = povertylines[1]),
-      tags$hr(),
-      downloadButton("download_filtered_csv",  "Download CSV",         class = "btn-sm"),
-      downloadButton("download_filtered_dta",  "Download Stata (.dta)", class = "btn-sm"),
-      downloadButton("download_filtered_excel","Download Excel (.xlsx)",class = "btn-sm"),
-      downloadButton("download_plot", "Download Figure (.jpeg)", class = "btn-sm")
-    )
-  }
-  
   else if (tab == "Compare groups") {
   tagList(
     # Selection A
@@ -294,8 +252,7 @@ filtered_data <- reactive({
     dt <- merge(dt, cov_flags, by = c(gv1, "year"), all.x = TRUE)
 
   # ---- selections for group_var1
-  # On the first tab, use group0 checkboxes; on Compare Groups (Side-by-Side), use group1 checkboxes.
-  sel_g1 <- if (tab == "Compare Groups (Side-by-Side)") input$group1_values else input$group0_values
+  sel_g1 <- input$group0_values
   if (is.null(sel_g1)) sel_g1 <- unique(dt[[input$group_var1]])
 
   # ---- d0: number of poor (always available; used on first tab)
@@ -322,19 +279,9 @@ filtered_data <- reactive({
 
   
 
-  # ---- d2: only needed on Compare Groups (Side-by-Side); otherwise return empty DT
-  if (tab == "Compare Groups (Side-by-Side)") {
-    req(input$group_var2)
-    sel_g2 <- input$group2_values
-    if (is.null(sel_g2)) sel_g2 <- unique(dt[[gv2]])
-    d2 <- dt[
-      get(gv2) %in% sel_g2,
-      .(headcount = weighted.mean(headcount, pop, na.rm = TRUE)),
-      by = c("year", gv2)
-    ]
-  } else {
+  # ---- d2: return empty DT
     d2 <- data.table()
-  }
+ 
 
    # ---- ONLY for the new overlay tab: build two single lines and combine ----
 if (tab == "Compare groups") {
@@ -415,14 +362,6 @@ output$download_filtered <- downloadHandler(
       gv <- underscore_var(input$group_var1)
       merge(d1, d0, by = c("year", gv), all = TRUE)
       
-    } else if (tab == "Compare Groups (Side-by-Side)") {
-      d1  <- filtered_data()$graph1
-      d2  <- filtered_data()$graph2
-      gv1 <- underscore_var(input$group_var1)
-      gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      rbindlist(list(d1, d2), fill = TRUE)
     } else if (tab == "Compare groups") {
     ov <- filtered_data()$graph_overlay
     data <- ov[, .(year, group, definition, headcount, pop_in_pov)]
@@ -471,16 +410,7 @@ output$download_filtered_csv <- downloadHandler(
     )
   ]
 
-    } else if (tab == "Compare Groups (Side-by-Side)"){
-      d1  <- filtered_data()$graph1
-      d2  <- filtered_data()$graph2
-      gv1 <- underscore_var(input$group_var1)
-      gv2 <- underscore_var(input$group_var2)
-      if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-      if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-      rbindlist(list(d1, d2), fill = TRUE)
-     
-} else if (tab == "Compare groups") {
+    } else if (tab == "Compare groups") {
   ov <- filtered_data()$graph_overlay
   ov[
     # estimate_type from year + cov_flag (already merged in overlay)
@@ -545,15 +475,6 @@ output$download_filtered_dta <- downloadHandler(
       estimate_type        = estimate_type
     )
   ]
-
-  } else if (tab == "Compare Groups (Side-by-Side)") {
-    d1  <- filtered_data()$graph1
-    d2  <- filtered_data()$graph2
-    gv1 <- underscore_var(input$group_var1)
-    gv2 <- underscore_var(input$group_var2)
-    if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-    if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-    rbindlist(list(d1, d2), fill = TRUE)
 
   } else if (tab == "Compare groups") {
   ov <- filtered_data()$graph_overlay
@@ -646,17 +567,7 @@ data <- if (tab == "Poverty headcount and the number of poor") {
   ]
 
 
-  } else if (tab == "Compare Groups (Side-by-Side)") {
-    # leave behavior unchanged (no Side-by-Side restructure requested)
-    d1  <- filtered_data()$graph1
-    d2  <- filtered_data()$graph2
-    gv1 <- underscore_var(input$group_var1)
-    gv2 <- underscore_var(input$group_var2)
-    if (nrow(d1)) { d1 <- copy(d1); setnames(d1, gv1, "group"); d1[, chart := paste0("Figure 1: ", input$group_var1)] }
-    if (nrow(d2)) { d2 <- copy(d2); setnames(d2, gv2, "group"); d2[, chart := paste0("Figure 2: ", input$group_var2)] }
-    rbindlist(list(d1, d2), fill = TRUE)
-
-} else if (tab == "Compare groups") {
+  } else if (tab == "Compare groups") {
   ov <- filtered_data()$graph_overlay
   ov[
     , estimate_type := fifelse(
@@ -955,50 +866,7 @@ p2 <- ggplot(d_list$graph0,
       
       
     }
-  } else if (input$active_tab == "Compare Groups (Side-by-Side)") {
-
-
-    if (fnrow(d_list$graph1) == 0 & fnrow(d_list$graph2) == 0) {
-      ggplot() +
-        annotate("text",
-                 x     = 1,
-                 y     = 1,
-                 label = "This selection has no data.",
-                 size  = 6,
-                 hjust = 0.5) +
-        theme_void()
-    }
-
-    else {
-      p1 <- ggplot(d_list$graph1,
-                   aes(x     = year,
-                       y     = headcount * 100,
-                       color = .data[[underscore_var(input$group_var1)]])) +
-        geom_line(linewidth = 1) +
-        labs(
-          title = paste("Poverty rate by", tolower(input$group_var1)),
-          y     = "Poverty headcount, %",
-          x     = "") +
-        my_theme(by = input$group_var1) 
-
-
-      p2 <- ggplot(d_list$graph2,
-                   aes(x     = year,
-                       y     = headcount * 100,
-                       color = .data[[underscore_var(input$group_var2)]])) +
-        geom_line(linewidth = 1) +
-        labs(
-          title = paste("Poverty rate by", tolower(input$group_var2)),
-          y     = "Poverty headcount, %",
-          x     = "") +
-        my_theme(by = input$group_var2) 
-
-      p <- p1 + p2
-      last_plot(p)
-      return(p)
-    }
-  }
-  else if (input$active_tab == "Compare groups") {
+  } else if (input$active_tab == "Compare groups") {
 
   ov <- filtered_data()$graph_overlay
 
