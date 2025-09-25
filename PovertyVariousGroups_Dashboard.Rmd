@@ -79,7 +79,7 @@ group_choices <- function(var) {
 output$dynamic_sidebar <- renderUI({
   tab <- input$active_tab
   if (is.null(tab)) tab <- "Poverty headcount and the number of poor"
-  if (tab == "About") {
+  if (tab == "about") {
     return(NULL)  # no controls on About
       
   } else if (tab == "Poverty headcount and the number of poor") {
@@ -729,48 +729,120 @@ tabsetPanel(
   
   tabPanel("Compare groups"),
   
-  tabPanel(
-    "About",
-    HTML("
-      <div style='margin-bottom: 15px; font-size: 14px; line-height: 1.6; max-width: 100%;'>
-        <p>
-          
-          This dashboard presents poverty statistics for various groups that are not all currently reported on the 
-          <em>World Bank’s Poverty and Inequality Platform (PIP)</em>, but are often used in reports and analyses. 
-          It uses the latest vintage of PIP data (September 2025) and applies the <strong>2021 PPPs</strong>.
-        </p>
+  tabPanel("About", value = "about",
+  tabsetPanel(
+    id = "about_tabs",
+    type = "tabs",
 
-        <p>
-          It presents poverty indicators—<strong>poverty rate</strong> and <strong>millions of poor people</strong>—
-          at the three global poverty lines used by the World Bank: <strong>$3.00</strong>, <strong>$4.20</strong>, and <strong>$8.30</strong>. 
-          Four types of groupings are included: (i) geographic regions, (ii) World Bank income groups, 
-          (iii) World Bank fragility classification (FCV), and (iv) IDA eligibility status.
-        </p>
+    tabPanel("Overview",
+      HTML("
+        <div style='margin-bottom: 15px; font-size: 14px; line-height: 1.6; max-width: 100%;'>
 
-        <p>
-          With the September 2025 PIP update, PIP’s geographical regions were aligned with the 
-          <em>World Bank’s official regional classification</em>. Prior to this, PIP used its own regional definition (that originated from the previous platform called PovcalNet) 
-          that excluded some high-income economies from regional aggregates, placing them into a separate group 
-          called “Other High Income.” This grouping no longer appears, and a new region—<strong>North America</strong>—now exists. The countries previously included in the “Other High Income” group are now included in their geographic World Bank regions. 
-        </p>
+          <h4 style='margin-top: 0;'></h4>
 
-        <p>
-          Users should note that the World Bank has recently reclassified <strong>Afghanistan</strong> and <strong>Pakistan</strong> 
-          from the <em>South Asia</em> region to <em>Middle East & North Africa</em>. As a result of this, as well as the change in the high-income countries,
-          <strong>Sub-Saharan Africa</strong> is the only region whose composition remains unchanged. This dashboard allows users 
-          to compare regional aggregates using both the <strong>new</strong> and <strong>old</strong> regional definitions, 
-          while keeping the data vintage constant.
-        </p>
+          <p>
+            This dashboard presents poverty statistics for various groups that are not all currently reported on the 
+            <em>World Bank’s Poverty and Inequality Platform (PIP)</em>, but are often used in reports and analyses.
+            It uses the latest vintage of PIP data (September 2025) and applies the <strong>2021 PPPs</strong>. 
+            Users can also generate aggregate poverty for these and other groups using and modifying the Stata example code below.
+          </p>
 
-        <p>
-          For income group, FCV, and IDA status, the dashboard presents two types of aggregates:
-          <strong>latest classification</strong> (where each country is grouped based on its most recent fiscal year category, held constant over time),
-          and <strong>historical classification</strong> (where groupings change year-to-year based on past classifications). 
-          The historical series may exhibit more volatility due to these reclassifications over time.
-        </p>
-      </div>
-    ")
+          <p>
+            It presents poverty indicators—<strong>poverty rate</strong> and <strong>millions of poor people</strong>—at the three global poverty lines used by the World Bank: 
+            <strong>$3.00</strong>, <strong>$4.20</strong>, and <strong>$8.30</strong> per day. 
+            Four types of groupings are included: (i) geographic regions, (ii) World Bank income groups, 
+            (iii) World Bank fragility classification (Fragility, Conflict, and Violence; FCV), and 
+            (iv) International Development Association (IDA) eligibility status. 
+            For further details on the classifications, see 
+            <a href='https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups' target='_blank'>
+              this reference</a>.
+          </p>
+
+          <p>
+            With the September 2025 PIP update, PIP’s geographical regions were aligned with the 
+            <em>World Bank’s official regional classification</em>. 
+            Prior to this, PIP used its own regional definition (originating from the previous platform PovcalNet) 
+            that excluded some high-income economies from regional aggregates, placing them into a separate group called 
+            “Other High Income.” This grouping no longer appears, and a new region—<strong>North America</strong>—now exists. 
+            The countries previously included in the “Other High Income” group are now included in their geographic World Bank regions.
+          </p>
+
+          <p>
+            Users should note that the World Bank has recently reclassified <strong>Afghanistan</strong> and <strong>Pakistan</strong> 
+            from the <em>South Asia</em> region to <em>Middle East & North Africa</em>. 
+            As a result of this, as well as the changes in high-income country assignments, 
+            <strong>Sub-Saharan Africa</strong> is the only region whose composition remains unchanged. 
+            This dashboard allows users to compare regional aggregates using both the 
+            <strong>new</strong> and <strong>old</strong> regional definitions, 
+            while keeping the data vintage constant. 
+            In addition, the dashboard also reports poverty for the new region <em>excluding high-income countries</em> (excl. HICs).
+          </p>
+
+          <p>
+            For income group, FCV, and IDA status, the dashboard presents two types of aggregates: 
+            <strong>latest classification</strong> (where each country is grouped based on its most recent fiscal year category, held constant over time), and 
+            <strong>historical classification</strong> (where groupings change year-to-year based on past classifications). 
+            The historical series may exhibit more volatility due to these reclassifications over time. 
+            For the FCV and IDA categories, the historical classifications begin in 1998, when these groups were first introduced. 
+            Poverty for an additional grouping—<strong>IDA & Blend countries</strong>—is also reported using both historical and latest classifications.
+          </p>
+
+          <p>
+            <strong>Line style</strong> reflects data coverage for each group and year. 
+            An estimate has coverage <strong>(solid line)</strong> if the underlying survey data covers at least 50% of the group's population in that year. 
+            <strong>Dashed lines and gaps</strong> represent years when the survey data covers less than 50% of the group's population. 
+            For details on the coverage rules, see the 
+            <a href='https://datanalytics.worldbank.org/PIP-Methodology/lineupestimates.html#coverage' target='_blank'>
+              PIP Methodology Handbook</a>.
+          </p>
+
+          <p>
+            Data is available for download using the button above. 
+            The downloaded dataset includes estimates labeled as <strong>actual</strong> (≥50% population coverage), 
+            <strong>projection</strong> (&lt;50% coverage), and <strong>nowcast</strong> (estimates based on projected GDP data).
+          </p>
+
+        </div>
+      ")
+    ),
+
+    tabPanel("Stata example",
+      div(style = 'padding: 20px; font-size: 14px; line-height: 1.6; color: #333; max-width: 1000px;',
+    
+        p("Below are two examples to construct the aggregates using the PIP Stata ado. For details on the ado, see the ",
+          a("PIP GitHub repository", href = "https://github.com/worldbank/pip", target = "_blank"), "."),
+    
+        tags$h5("Example 1: Load poverty for PIP old regions"),
+        tags$pre(style = "background-color: #f8f9fa; padding: 10px; border: 1px solid #ccc; font-size: 13px;",
+    "
+    pip wb, clear fillgaps 
+    keep if inlist(region_code,\"EAP\",\"ECA\",\"LAC\",\"MNA\",\"OHI\",\"SAR\",\"SSA\") // keep only old regions
+    br region* year poverty_line headcount pop_in_poverty
+    "
+        ),
+    
+        tags$h5("Example 2: Generate poverty by FCV group"),
+        tags$pre(style = "background-color: #f8f9fa; padding: 10px; border: 1px solid #ccc; font-size: 13px;",
+    "
+    // load pip region and other latest classifications
+    pip tables, table(country_list) clear 
+    tempfile group_names
+    save `group_names'
+    
+    // load pip country data
+    pip, clear fillgaps server(dev)
+    merge m:1 country_code using `group_names', nogen
+    gen double pop_in_poverty = headcount * population
+    collapse (mean) headcount (rawsum) pop_in_poverty [aw=population], by(fcv* year)
+    br
+    "
+        )
+      )
+    )
+
   )
+)
+
 )
 
 
@@ -780,17 +852,18 @@ tabsetPanel(
 ```{r plot-output-mainplot}
 
 conditionalPanel(
-  condition = "input.active_tab != 'About'",
+  condition = "input.active_tab != 'about'",
   tagList(
     plotOutput("main_plot", height = "auto"),
     div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
       HTML(
-        "Source: Poverty and Inequality Platform (September 2025)<br>",
-         "Note: Line style reflects data coverage within each group and year. ",
-        "<em>Coverage</em> is the share of the group’s total population represented by country-year observations available in PIP for that year. ",
-        "Solid segments (≥ 50% coverage) indicate that at least half of the population is covered; ",
-        "dashed segments (&lt; 50% coverage) indicate limited coverage and should be interpreted with caution. "
-      )
+  "Source: Poverty and Inequality Platform (September 2025)<br>",
+  "Note: Line style reflects data coverage for each group and year. ",
+  "An estimate has coverage <strong>(solid line)</strong> if the underlying survey data covers at least 50% of the group's population in that year. ",
+  "<strong>Dashed lines and gaps</strong> represent years when survey data covers less than 50% of the group's population. ",
+  "For details on coverage rules, see the <a href='https://datanalytics.worldbank.org/PIP-Methodology/lineupestimates.html#coverage' target='_blank'>PIP Methodology Handbook</a>."
+)
+
     )
   )
 )
@@ -804,8 +877,8 @@ last_plot <- reactiveVal(NULL)
 
 output$main_plot <- renderPlot({
 
-    if (input$active_tab == "About") {
-    return(NULL)  # or show a small placeholder if you prefer
+    if (identical(input$active_tab, "about")) {
+        return(NULL)
     }
     
   d_list <- filtered_data()
