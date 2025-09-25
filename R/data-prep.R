@@ -70,6 +70,22 @@ country_data <- country_data %>%
 country_data <- country_data %>%
     left_join(pip_cov, by = c("iso3c", "year"))
 
+# Create two new groups for IDA+Blend (historical and current)
+country_data <- country_data %>%
+    mutate(
+        ida_blend_historical = case_when(
+            is.na(ida_historical) | ida_historical == "" ~ NA_character_,
+            ida_historical %in% c("IDA", "Blend") ~ "Yes",
+            TRUE ~ "No"
+        ),
+        ida_blend_current = case_when(
+            is.na(ida_current) | ida_current == "" ~ NA_character_,
+            ida_current %in% c("IDA", "Blend") ~ "Yes",
+            TRUE ~ "No"
+        )
+    )
+
+
 # (RECOVER AFTER UPDATE) Extract data directly from PIP
 country_data_old <- purrr::map_df(
     .x = povertylines,

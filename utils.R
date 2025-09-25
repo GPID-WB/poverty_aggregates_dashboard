@@ -34,6 +34,8 @@ underscore_var <- function(cn) {
                   "FCV (latest)"         = "fcv_current",
                   "IDA (historical)"      = "ida_historical",
                   "IDA (latest)"         = "ida_current",
+                  "IDA+Blend (historical)" = "ida_blend_historical",
+                  "IDA+Blend (current)"    = "ida_blend_current",
                   .default = gsub(" ", "_", cn))
 }
 
@@ -196,7 +198,8 @@ region_coverage_flag <- function(dt, group_var = "region_name") {
 label_keep_case <- function(x) {
     if (is.null(x)) return("")
     keep <- c("FCV (historical)", "FCV (latest)",
-              "IDA (historical)", "IDA (latest)")
+              "IDA (historical)", "IDA (latest)",
+              "IDA+Blend (historical)", "IDA+Blend (current)")
     if (x %chin% keep) x else tolower(x)
 }
 

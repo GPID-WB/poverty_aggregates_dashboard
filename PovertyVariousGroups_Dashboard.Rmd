@@ -71,7 +71,10 @@ output$dynamic_sidebar <- renderUI({
                               "FCV (historical)",
                               "FCV (latest)",
                               "IDA (historical)",
-                              "IDA (latest)")),
+                              "IDA (latest)",
+                              "IDA+Blend (historical)",
+                              "IDA+Blend (current)"
+                              )),
       uiOutput("group0_ui"),
 
       radioButtons("selected_line",
@@ -141,7 +144,9 @@ output$dynamic_sidebar <- renderUI({
                             "FCV (historical)",
                             "FCV (latest)",
                             "IDA (historical)",
-                            "IDA (latest)"),
+                            "IDA (latest)",
+                            "IDA+Blend (historical)",
+                            "IDA+Blend (current)"),
                  selected = "Region (new classification)"),
     uiOutput("overlay1_value_ui"),
 
@@ -156,7 +161,9 @@ output$dynamic_sidebar <- renderUI({
                             "FCV (historical)",
                             "FCV (latest)",
                             "IDA (historical)",
-                            "IDA (latest)"),
+                            "IDA (latest)",
+                            "IDA+Blend (historical)",
+                            "IDA+Blend (current)"),
                 selected = "Region (old PovcalNet classification)"),
     uiOutput("overlay2_value_ui"),
 
