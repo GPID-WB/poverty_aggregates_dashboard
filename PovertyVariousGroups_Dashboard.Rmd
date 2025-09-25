@@ -14,7 +14,29 @@ output:
   background-color: #044368 !important;
   border-color: #044368 !important;
 }
+
+/* Download dropdown styles */
+.btn-download {
+  background-color: #044368 !important;
+  border-color: #044368 !important;
+  color: #fff !important;
+}
+.btn-download:hover,
+.btn-download:focus {
+  background-color: #05527d !important;
+  border-color: #05527d !important;
+  color: #fff !important;
+}
+.dropdown-menu > li > a {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+.dropdown-menu .divider {
+  margin: 4px 0;
+}
+
 </style>
+
 ```
 ```{r setup, include=FALSE}
 library(fastverse)
@@ -81,11 +103,9 @@ output$dynamic_sidebar <- renderUI({
                    "Select poverty line (2021 PPP)",
                    choices  = pl_choices,
                    selected = povertylines[1]),
-      tags$hr(),
-      downloadButton("download_filtered_csv",  "Download CSV",         class = "btn-sm"),
-      downloadButton("download_filtered_dta",  "Download Stata (.dta)", class = "btn-sm"),
-      downloadButton("download_filtered_excel","Download Excel (.xlsx)",class = "btn-sm"),
-      downloadButton("download_plot", "Download Figure (.jpeg)", class = "btn-sm")
+    tags$hr(),
+    download_dropdown()
+
     )
   }
 
@@ -173,10 +193,7 @@ output$dynamic_sidebar <- renderUI({
                  choices  = pl_choices,
                  selected = povertylines[1]),
     tags$hr(),
-    downloadButton("download_filtered_csv",   "Download CSV",          class = "btn-sm"),
-    downloadButton("download_filtered_dta",   "Download Stata (.dta)", class = "btn-sm"),
-    downloadButton("download_filtered_excel", "Download Excel (.xlsx)",class = "btn-sm"),
-    downloadButton("download_plot",           "Download Figure (.jpeg)", class = "btn-sm")
+    download_dropdown()
   )
 }
 

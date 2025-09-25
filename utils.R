@@ -204,3 +204,23 @@ label_keep_case <- function(x) {
 }
 
 
+# Download dropdown
+
+download_dropdown <- function() {
+    div(class = "btn-group",
+        tags$button(
+            type = "button",
+            class = "btn btn-download btn-sm dropdown-toggle",
+            `data-toggle` = "dropdown",
+            "DOWNLOAD ", tags$span(class = "caret")
+        ),
+        tags$ul(class = "dropdown-menu",
+                tags$li(downloadLink("download_filtered_csv",   "Download selection (CSV)")),
+                tags$li(downloadLink("download_filtered_dta",   "Download selection (Stata .dta)")),
+                tags$li(downloadLink("download_filtered_excel", "Download selection (Excel .xlsx)")),
+                tags$li(role = "separator", class = "divider"),
+                tags$li(downloadLink("download_plot", "Download figure (.jpeg)"))
+        )
+    )
+}
+
