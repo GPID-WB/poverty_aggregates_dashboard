@@ -16,12 +16,22 @@ povertylines <- c(3.00, 4.20, 8.30)
 # Classification data
 
 class_data <- read_dta(
-    "https://raw.githubusercontent.com/GPID-WB/Class/6e6123c1e5f1eea1636dd99f387aa98517d1ac7f/OutputData/CLASS.dta"
+    "https://raw.githubusercontent.com/GPID-WB/Class/master/OutputData/CLASS.dta"
 ) %>%
-    select(year_data, economy, code, region, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
+    select(year_data, economy, code, region, regionpcn, incgroup, fcv, ida) %>%
     rename(iso3c = code,
-           year = year_data) %>%
-    mutate(iso3c = trimws(toupper(iso3c)))
+           year = year_data,
+           incgroup_historical = incgroup,
+           fcv_historical = fcv,
+           ida_historical = ida,
+           region_name = region,
+           region_old = regionpcn) %>%
+    mutate(iso3c = trimws(toupper(iso3c))) %>%
+    group_by(iso3c) %>%
+    mutate(incgroup_current = incgroup_historical[year == 2024],
+           fcv_current = fcv_historical[year == 2024],
+           ida_current = ida_historical[year == 2024]) %>%
+    ungroup()
 
 # Population data: for Argentina
 
@@ -34,14 +44,6 @@ pip_cov <- read_dta("data/pip_country_coverage.dta") %>%
     rename(iso3c = country_code) %>%
     distinct(iso3c, year, .keep_all = TRUE)
 
-# Define old poverty regions
-
-reg_old <- get_aux("country_list") %>%
-    select(country_code,pcn_region) %>%
-    rename(iso3c = country_code) %>%
-    rename(region_old = pcn_region)
-
-
 # Poverty data from PIP
 
 # (PLACEHOLDER) Import downloaded latest updates for PIP data
@@ -53,7 +55,7 @@ country_data <- read_dta("data/pip_fillgaps_20250930_2021_01_02_PROD.dta") %>%
     rename(iso3c = country_code,
            pop = population) %>%
     left_join(class_data, by = c("year","iso3c")) %>%
-    left_join(reg_old, by = "iso3c") %>%
+    rename(region_name = region_name.x) %>%
     select(region_name, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
     mutate(pop_in_pov = headcount * pop)
 
@@ -86,21 +88,21 @@ country_data <- country_data %>%
     )
 
 
-# (RECOVER AFTER UPDATE) Extract data directly from PIP
-country_data_old <- purrr::map_df(
-    .x = povertylines,
-    .f = pipr::get_stats,
-    country = "all",
-    year = "all",
-    nowcast = TRUE
-) %>%
-    rename(iso3c = country_code) %>%
-    left_join(class_data, by = c("year","iso3c")) %>%
-    left_join(reg_old, by = "iso3c") %>%
-    select(region, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
-    mutate(pop_in_pov = headcount * pop) %>%
-    rename(region_name = region)
-
+# # (RECOVER AFTER UPDATE) Extract data directly from PIP
+# country_data_old <- purrr::map_df(
+#     .x = povertylines,
+#     .f = pipr::get_stats,
+#     country = "all",
+#     year = "all",
+#     nowcast = TRUE
+# ) %>%
+#     rename(iso3c = country_code) %>%
+#     left_join(class_data, by = c("year","iso3c")) %>%
+#     left_join(reg_old, by = "iso3c") %>%
+#     select(region, region_code, region_old, country_name, iso3c, year, poverty_line, headcount, pop, incgroup_historical, incgroup_current, fcv_historical, fcv_current, ida_historical, ida_current) %>%
+#     mutate(pop_in_pov = headcount * pop) %>%
+#     rename(region_name = region)
+#
 
 # write
 fst::write_fst(x    = country_data,
