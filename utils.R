@@ -103,7 +103,14 @@ my_theme <- function(by,
             limits = c(1981, 2025),
             breaks = unique(c(1981, pretty(1981:2025, n = 6), 2025)),
             expand = expansion(mult = c(0, 0))
-        )
+        ),
+        scale_y_continuous(
+            limits = c(0, NA),
+            expand = expansion(mult = c(0, 0.08))
+        ),
+        coord_cartesian(clip = "off")
+
+
     ))
 
     # Override with manual palettes for region / income
