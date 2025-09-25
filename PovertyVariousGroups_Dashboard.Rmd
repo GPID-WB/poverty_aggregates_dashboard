@@ -708,7 +708,7 @@ tabsetPanel(
           </p>
 
           <p>
-            Data is available for download using the button above. 
+            Data is available for download using the button on the left sidebar. 
             The downloaded dataset includes estimates labeled as <strong>actual</strong> (≥50% population coverage), 
             <strong>projection</strong> (&lt;50% coverage), and <strong>nowcast</strong> (estimates based on projected GDP data).
           </p>
