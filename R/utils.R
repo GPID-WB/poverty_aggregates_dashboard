@@ -127,8 +127,8 @@ my_theme <- function(by,
     # Override with manual palettes for region / income
     if (group == "region") {
         parts <- c(parts, list(
-            scale_region_color_manual(drop = drop),
-            scale_region_fill_manual(drop = drop)
+            scale_region_color_manual(drop = drop, labels = wrap_mideast_only),
+            scale_region_fill_manual(drop = drop, labels = wrap_mideast_only)
         ))
     } else if (group == "income") {
         parts <- c(parts, list(
@@ -136,6 +136,7 @@ my_theme <- function(by,
             scale_income_fill_manual(drop = drop)
         ))
     }
+
 
     parts
 }
@@ -177,13 +178,13 @@ wb_income_colors <- function() {
 
 
 # 2) Set up manual scale functions for use in plots
-scale_region_color_manual <- function(drop = FALSE) {
-    scale_color_manual(values = wb_region_colors(), drop = drop)
+scale_region_color_manual <- function(drop = FALSE, ...) {
+    scale_color_manual(values = wb_region_colors(), drop = drop, ...)
+}
+scale_region_fill_manual <- function(drop = FALSE, ...) {
+    scale_fill_manual(values = wb_region_colors(), drop = drop, ...)
 }
 
-scale_region_fill_manual <- function(drop = FALSE) {
-    scale_fill_manual(values = wb_region_colors(), drop = drop)
-}
 
 scale_income_color_manual <- function(drop = FALSE) {
     scale_color_manual(values = wb_income_colors(), drop = drop)
@@ -241,4 +242,20 @@ download_dropdown <- function() {
         )
     )
 }
+
+
+# Wrap only labels that start with "Middle East"
+wrap_mideast_only <- function(x, width = 30) {
+    if (is.null(x)) return(x)
+    vapply(x, function(s) {
+        if (is.na(s)) return(s)
+        if (grepl("^Middle East", s)) {
+            wrapped <- strwrap(s, width = width)
+            paste(wrapped[1:min(2, length(wrapped))], collapse = "\n\n\n")
+        } else {
+            s
+        }
+    }, character(1))
+}
+
 
