@@ -245,7 +245,7 @@ download_dropdown <- function() {
 
 
 # Wrap only labels that start with "Middle East"
-wrap_mideast_only <- function(x, width = 30) {
+wrap_mideast_only <- function(x, width = 40) {
     if (is.null(x)) return(x)
     vapply(x, function(s) {
         if (is.na(s)) return(s)
