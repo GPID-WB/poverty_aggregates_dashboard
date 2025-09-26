@@ -39,6 +39,17 @@ underscore_var <- function(cn) {
                   .default = gsub(" ", "_", cn))
 }
 
+# Put MENA / MENAAP at the end of levels so it prints on the last legend row
+relevel_mena_last <- function(x) {
+    if (is.null(x)) return(x)
+    x_chr <- as.character(x)
+    lev   <- unique(x_chr)  # keep current order of appearance
+
+    is_mena <- grepl("\\bMENA\\b", lev) |
+        grepl("^Middle East", lev)  # matches "Middle East & North Africa" and MENAAP variants
+
+    factor(x_chr, levels = c(lev[!is_mena], lev[is_mena]))
+}
 
 
 my_theme <- function(by,

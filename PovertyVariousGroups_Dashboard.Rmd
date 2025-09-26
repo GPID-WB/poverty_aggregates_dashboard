@@ -241,7 +241,12 @@ filtered_data <- reactive({
         dt <- dt[!is.na(get(gv2)) & !(get(gv2) %chin% bad)]
       }
     }
-      
+     
+    # --- ensure MENA / MENAAP prints last in legend (factor levels) ---
+    if (gv1 %chin% c("region_name", "region_old", "region_WDI", "region")) {
+      dt[, (gv1) := relevel_mena_last(get(gv1))]
+    }
+    
     # Add coverage flag based on selected group_var1
     cov_flags <- region_coverage_flag(dt, input$group_var1)
     
