@@ -397,7 +397,8 @@ get_font_weight <- function(fontFace){
 
 scale_color_wb_d <- function(...,
                              palette = "default",
-                             na.value = WBCOLORS[["noData"]]) {
+                             na.value = WBCOLORS[["noData"]],
+                             WBPALETTES = WBPALETTES) {
 
     makeUpperCase <- function(lowcase){
         return(toupper(lowcase))

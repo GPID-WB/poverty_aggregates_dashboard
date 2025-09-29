@@ -843,7 +843,8 @@ output$main_plot <- renderPlot({
         y     = "Poverty headcount, %",
         x     = ""
       ) +
-      my_theme(by = input$group_var1) +
+      my_theme(by = input$group_var1, 
+               WBPALETTES = WBPALETTES) +
       # keep WBG style; ensures the coverage legend shows solid vs dashed
       scale_linetype_manual(values = c("≥50% coverage" = "solid",
                                        "<50% coverage" = "dashed")) + 
@@ -866,7 +867,7 @@ p2 <- ggplot(d_list$graph0,
     y     = "Millions of poor",
     x     = ""
   ) +
-  my_theme(by = input$group_var1) +
+  my_theme(by = input$group_var1, WBPALETTES = WBPALETTES) +
   scale_linetype_manual(
     values = c("≥50% coverage" = "solid",
                "<50% coverage" = "dashed")
@@ -915,7 +916,7 @@ p2 <- ggplot(d_list$graph0,
   labs(title = "Poverty rate",
        y = "Poverty headcount, %",
        x = "") +
-  my_theme(by = input$group_var1) +
+  my_theme(by = input$group_var1, WBPALETTES = WBPALETTES) +
   scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL)) +
   scale_linetype_manual(values = c("≥50% coverage" = "solid",
                                    "<50% coverage" = "dashed")) + 
@@ -936,7 +937,7 @@ p2 <- ggplot(d_list$graph0,
   labs(title = "Number of poor",
        y = "Millions of poor",
        x = "") +
-  my_theme(by = input$group_var1) +
+  my_theme(by = input$group_var1, WBPALETTES = WBPALETTES) +
   scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL)) +
   scale_linetype_manual(values = c("≥50% coverage" = "solid",
                                    "<50% coverage" = "dashed"),)+ 

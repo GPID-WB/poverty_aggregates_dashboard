@@ -56,7 +56,8 @@ my_theme <- function(by,
                      base_size   = 18,
                      legend      = c("bottom", "top", "left", "right", "none"),
                      drop        = FALSE,
-                     legend_nrow = 4) {
+                     legend_nrow = 4,
+                     WBPALETTES = WBPALETTES) {
     legend <- match.arg(legend)
 
     # Map `by` to region / income / other
@@ -91,7 +92,7 @@ my_theme <- function(by,
             panel.border = element_rect(color = "black", fill = NA, linewidth = 0.6)
 
         ),
-        scale_color_wb_d(),
+        scale_color_wb_d(WBPALETTES = WBPALETTES),
         scale_fill_wb_d(),
         scale_linetype_manual(
             values = c("≥50% coverage" = "solid", "<50% coverage" = "longdash"),
