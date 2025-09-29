@@ -23,8 +23,9 @@ space_var <- function(cn) {
 
 underscore_var <- function(cn) {
     if (is.null(cn)) return(NULL)
+    if (length(cn) > 1) cli::cli_abort("`switch` only works for scalars")
 
-    dplyr::recode(cn,
+    switch(cn,
                   "Region (new classification)" = "region_name",
                   "Region (old PovcalNet classification)"     = "region_old",
                   "Region (new classification excl. HICs)" = "region_WDI",
@@ -36,7 +37,7 @@ underscore_var <- function(cn) {
                   "IDA (latest)"         = "ida_current",
                   "IDA+Blend (historical)" = "ida_blend_historical",
                   "IDA+Blend (current)"    = "ida_blend_current",
-                  .default = gsub(" ", "_", cn))
+                  gsub(" ", "_", cn))
 }
 
 # Put MENA / MENAAP at the end of levels so it prints on the last legend row
