@@ -32,7 +32,8 @@ theme_wb <- function(
         addYZeroLine = FALSE,
         addYAxisTitle = FALSE,
         addXAxisTitle = FALSE,
-        WBCOLORS = WBCOLORS
+        WBCOLORS = WBCOLORS,
+        WBPALETTES = WBPALETTES
 ) {
 
     # Warnings for cases where zero lines can't be added
@@ -449,7 +450,8 @@ scale_color_wb_d <- function(...,
 
 scale_fill_wb_d <- function(...,
                             palette = "default",
-                            na.value = WBCOLORS[["noData"]]) {
+                            na.value = WBCOLORS[["noData"]],
+                            WBPALETTES = WBPALETTES) {
 
     makeUpperCase <- function(lowcase){
         return(toupper(lowcase))
