@@ -1,10 +1,14 @@
 ---
 title: "Aggregate Poverty Data Dashboard"
 runtime: shiny
-output: 
+output:
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: scroll
+resource_files:
+- data/WBCOLORS.qs
+- data/WBPALETTES.qs
+- data/WBSTYLE.qs
 ---
 
 ```{=html}
@@ -43,12 +47,17 @@ library(fastverse)
 library(ggplot2)
 library(shiny)
 library(patchwork)
-library(wbplot)
 ```
 
 ```{r load-init}
 povertylines <- c(3.00, 4.20, 8.30)
-
+# load objs for wbplot theme
+WBCOLORS   <- qs::qread(file = here::here("data", 
+                                          "WBCOLORS.qs"))
+WBPALETTES <- qs::qread(file = here::here("data", 
+                                          "WBPALETTES.qs"))
+WBSTYLE    <- qs::qread(file = here::here("data", 
+                                          "WBSTYLE.qs"))
 # Pretty labels for the UI; values remain the same as `povertylines`
 pl_choices <- setNames(
   povertylines,
@@ -60,6 +69,7 @@ country_data <-
   fst::read_fst(path          = path_fst, 
                 as.data.table = TRUE)
 source(file = fs::path(here::here(), "R/utils.R"))
+source(file = fs::path(here::here(), "R/wbplot.R"))
 group_choices <- function(var) {
     var  <- underscore_var(var)
     vals <- country_data[[var]]
@@ -73,6 +83,8 @@ group_choices <- function(var) {
     
     sort(funique(vals))
 }
+
+
 ```
 
 ```{r sidebar}
@@ -277,10 +289,10 @@ filtered_data <- reactive({
     group_var <- underscore_var(input$group_var1)
     
     d1 <- merge(d1, cov_flags, by = c(group_var, "year"), all.x = TRUE)
-    d1[, cov_flag := ifelse(cov == 1, "≥50% coverage", "<50% coverage")]
+    d1[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage")]
     
     d0 <- merge(d0, cov_flags, by = c(group_var, "year"), all.x = TRUE)
-    d0[, cov_flag := ifelse(cov == 1, "≥50% coverage", "<50% coverage")]
+    d0[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage")]
 
   
 
@@ -330,12 +342,12 @@ if (tab == "Compare groups") {
     dA <- merge(dA, cov1, by.x = c("group", "year"),
                      by.y = c(underscore_var(input$group_var1), "year"),
                      all.x = TRUE)
-    dA[, cov_flag := ifelse(cov == 1, "≥50% coverage", "<50% coverage")]
+    dA[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage")]
     
     dB <- merge(dB, cov2, by.x = c("group", "year"),
                      by.y = c(underscore_var(input$group_var2), "year"),
                      all.x = TRUE)
-    dB[, cov_flag := ifelse(cov == 1, "≥50% coverage", "<50% coverage")]
+    dB[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage")]
 
   
   
@@ -820,13 +832,13 @@ output$main_plot <- renderPlot({
                  aes(x = year, color = .data[[series_var]])) +
       # solid segments: only where coverage >= 50% (others are NA → line breaks)
       geom_line(
-        aes(y = ifelse(cov_flag == "≥50% coverage", headcount * 100, NA_real_),
+        aes(y = fifelse(cov_flag == "≥50% coverage", headcount * 100, NA_real_),
             linetype = "≥50% coverage"),
         linewidth = 1, na.rm = TRUE
       ) +
       # dashed segments: only where coverage < 50% (others are NA → line breaks)
       geom_line(
-        aes(y = ifelse(cov_flag == "<50% coverage", headcount * 100, NA_real_),
+        aes(y = fifelse(cov_flag == "<50% coverage", headcount * 100, NA_real_),
             linetype = "<50% coverage"),
         linewidth = 1, na.rm = TRUE
       ) +
@@ -835,7 +847,9 @@ output$main_plot <- renderPlot({
         y     = "Poverty headcount, %",
         x     = ""
       ) +
-      my_theme(by = input$group_var1) +
+      my_theme(by = input$group_var1, 
+               WBPALETTES = WBPALETTES, 
+               WBCOLORS = WBCOLORS) +
       # keep WBG style; ensures the coverage legend shows solid vs dashed
       scale_linetype_manual(values = c("≥50% coverage" = "solid",
                                        "<50% coverage" = "dashed")) + 
@@ -844,12 +858,12 @@ output$main_plot <- renderPlot({
 p2 <- ggplot(d_list$graph0,
              aes(x = year, color = .data[[series_var]])) +
   geom_line(
-    aes(y = ifelse(cov_flag == "≥50% coverage", pop_in_pov / 1e6, NA_real_),
+    aes(y = fifelse(cov_flag == "≥50% coverage", pop_in_pov / 1e6, NA_real_),
         linetype = "≥50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
   geom_line(
-    aes(y = ifelse(cov_flag == "<50% coverage", pop_in_pov / 1e6, NA_real_),
+    aes(y = fifelse(cov_flag == "<50% coverage", pop_in_pov / 1e6, NA_real_),
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
@@ -858,7 +872,9 @@ p2 <- ggplot(d_list$graph0,
     y     = "Millions of poor",
     x     = ""
   ) +
-  my_theme(by = input$group_var1) +
+  my_theme(by = input$group_var1, 
+           WBPALETTES = WBPALETTES, 
+           WBCOLORS = WBCOLORS) +
   scale_linetype_manual(
     values = c("≥50% coverage" = "solid",
                "<50% coverage" = "dashed")
@@ -895,19 +911,21 @@ p2 <- ggplot(d_list$graph0,
   # Overlay: Poverty rate (%)
     p_rate <- ggplot(ov, aes(x = year, color = .data[["line_label"]])) +
   geom_line(
-    aes(y = ifelse(cov_flag == "≥50% coverage", headcount * 100, NA_real_),
+    aes(y = fifelse(cov_flag == "≥50% coverage", headcount * 100, NA_real_),
         linetype = "≥50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
   geom_line(
-    aes(y = ifelse(cov_flag == "<50% coverage",  headcount * 100, NA_real_),
+    aes(y = fifelse(cov_flag == "<50% coverage",  headcount * 100, NA_real_),
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
   labs(title = "Poverty rate",
        y = "Poverty headcount, %",
        x = "") +
-  my_theme(by = input$group_var1) +
+  my_theme(by = input$group_var1, 
+           WBPALETTES = WBPALETTES, 
+           WBCOLORS = WBCOLORS) +
   scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL)) +
   scale_linetype_manual(values = c("≥50% coverage" = "solid",
                                    "<50% coverage" = "dashed")) + 
@@ -916,19 +934,21 @@ p2 <- ggplot(d_list$graph0,
   # Overlay: Millions of poor
     p_pop <- ggplot(ov, aes(x = year, color = .data[["line_label"]])) +
   geom_line(
-    aes(y = ifelse(cov_flag == "≥50% coverage", pop_in_pov / 1e6, NA_real_),
+    aes(y = fifelse(cov_flag == "≥50% coverage", pop_in_pov / 1e6, NA_real_),
         linetype = "≥50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
   geom_line(
-    aes(y = ifelse(cov_flag == "<50% coverage",  pop_in_pov / 1e6, NA_real_),
+    aes(y = fifelse(cov_flag == "<50% coverage",  pop_in_pov / 1e6, NA_real_),
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
   labs(title = "Number of poor",
        y = "Millions of poor",
        x = "") +
-  my_theme(by = input$group_var1) +
+  my_theme(by = input$group_var1, 
+           WBPALETTES = WBPALETTES, 
+           WBCOLORS   = WBCOLORS) +
   scale_color_manual(values = col_map, breaks = names(col_map), guide = guide_legend(title = NULL)) +
   scale_linetype_manual(values = c("≥50% coverage" = "solid",
                                    "<50% coverage" = "dashed"),)+ 

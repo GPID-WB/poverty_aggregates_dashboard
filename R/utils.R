@@ -23,8 +23,9 @@ space_var <- function(cn) {
 
 underscore_var <- function(cn) {
     if (is.null(cn)) return(NULL)
+    if (length(cn) > 1) cli::cli_abort("`switch` only works for scalars")
 
-    dplyr::recode(cn,
+    switch(cn,
                   "Region (new classification)" = "region_name",
                   "Region (old PovcalNet classification)"     = "region_old",
                   "Region (new classification excl. HICs)" = "region_WDI",
@@ -36,7 +37,7 @@ underscore_var <- function(cn) {
                   "IDA (latest)"         = "ida_current",
                   "IDA+Blend (historical)" = "ida_blend_historical",
                   "IDA+Blend (current)"    = "ida_blend_current",
-                  .default = gsub(" ", "_", cn))
+                  gsub(" ", "_", cn))
 }
 
 # Put MENA / MENAAP at the end of levels so it prints on the last legend row
@@ -53,10 +54,12 @@ relevel_mena_last <- function(x) {
 
 
 my_theme <- function(by,
-                     base_size   = 5,
+                     base_size   = 18,
                      legend      = c("bottom", "top", "left", "right", "none"),
                      drop        = FALSE,
-                     legend_nrow = 4) {
+                     legend_nrow = 4,
+                     WBPALETTES = WBPALETTES,
+                     WBCOLORS = WBCOLORS) {
     legend <- match.arg(legend)
 
     # Map `by` to region / income / other
@@ -70,15 +73,15 @@ my_theme <- function(by,
     }
 
     parts <- list(
-        theme_wb(chartType     = "line",
-                 addYAxisTitle = TRUE),
+        # theme_wb(chartType     = "line",
+        #          addYAxisTitle = TRUE),
         theme(
             text              = element_text(size = base_size),
             legend.position   = legend,
             legend.title      = element_blank(),
-            legend.text       = element_text(size = 5, margin = margin(r = 6)),
-            legend.key.size   = unit(0.5, "cm"),
-            legend.key.width  = unit(0.5, "cm"),
+            legend.text       = element_text(size = 12, margin = margin(r = 6)),
+            legend.key.size   = unit(1, "cm"),
+            legend.key.width  = unit(2, "cm"),
             legend.spacing.x  = unit(2, "mm"),
             legend.spacing.y  = unit(1, "mm"),
             legend.margin     = margin(0.1, 0.1, 0.1, 0.1, "cm"),
@@ -91,8 +94,10 @@ my_theme <- function(by,
             panel.border = element_rect(color = "black", fill = NA, linewidth = 0.6)
 
         ),
-        scale_color_wb_d(),
-        scale_fill_wb_d(),
+        scale_color_wb_d(WBPALETTES = WBPALETTES,
+                         na.value   = WBCOLORS[["noData"]]),
+        scale_fill_wb_d(WBPALETTES = WBPALETTES,
+                        na.value = WBCOLORS[["noData"]]),
         scale_linetype_manual(
             values = c("≥50% coverage" = "solid", "<50% coverage" = "longdash"),
             breaks = c("≥50% coverage", "<50% coverage"),
