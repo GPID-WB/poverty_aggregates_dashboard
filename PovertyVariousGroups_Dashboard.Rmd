@@ -43,12 +43,17 @@ library(fastverse)
 library(ggplot2)
 library(shiny)
 library(patchwork)
-library(wbplot)
 ```
 
 ```{r load-init}
 povertylines <- c(3.00, 4.20, 8.30)
-
+# load objs for wbplot theme
+WBCOLORS   <- qs::qread(file = here::here("data", 
+                                          "WBCOLORS.qs"))
+WBPALETTES <- qs::qread(file = here::here("data", 
+                                          "WBPALETTES.qs"))
+WBSTYLE    <- qs::qread(file = here::here("data", 
+                                          "WBSTYLE.qs"))
 # Pretty labels for the UI; values remain the same as `povertylines`
 pl_choices <- setNames(
   povertylines,
@@ -60,6 +65,7 @@ country_data <-
   fst::read_fst(path          = path_fst, 
                 as.data.table = TRUE)
 source(file = fs::path(here::here(), "R/utils.R"))
+source(file = fs::path(here::here(), "R/wbplot.R"))
 group_choices <- function(var) {
     var  <- underscore_var(var)
     vals <- country_data[[var]]
@@ -73,6 +79,8 @@ group_choices <- function(var) {
     
     sort(funique(vals))
 }
+
+
 ```
 
 ```{r sidebar}

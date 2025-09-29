@@ -53,7 +53,7 @@ relevel_mena_last <- function(x) {
 
 
 my_theme <- function(by,
-                     base_size   = 5,
+                     base_size   = 18,
                      legend      = c("bottom", "top", "left", "right", "none"),
                      drop        = FALSE,
                      legend_nrow = 4) {
@@ -70,15 +70,15 @@ my_theme <- function(by,
     }
 
     parts <- list(
-        theme_wb(chartType     = "line",
-                 addYAxisTitle = TRUE),
+        # theme_wb(chartType     = "line",
+        #          addYAxisTitle = TRUE),
         theme(
             text              = element_text(size = base_size),
             legend.position   = legend,
             legend.title      = element_blank(),
-            legend.text       = element_text(size = 5, margin = margin(r = 6)),
-            legend.key.size   = unit(0.5, "cm"),
-            legend.key.width  = unit(0.5, "cm"),
+            legend.text       = element_text(size = 12, margin = margin(r = 6)),
+            legend.key.size   = unit(1, "cm"),
+            legend.key.width  = unit(2, "cm"),
             legend.spacing.x  = unit(2, "mm"),
             legend.spacing.y  = unit(1, "mm"),
             legend.margin     = margin(0.1, 0.1, 0.1, 0.1, "cm"),
