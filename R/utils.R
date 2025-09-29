@@ -54,10 +54,10 @@ relevel_mena_last <- function(x) {
 
 
 my_theme <- function(by,
-                     base_size   = 18,
+                     base_size   = 12,
                      legend      = c("bottom", "top", "left", "right", "none"),
                      drop        = FALSE,
-                     legend_nrow = 4,
+                     legend_nrow = 3,
                      WBPALETTES = WBPALETTES,
                      WBCOLORS = WBCOLORS) {
     legend <- match.arg(legend)
@@ -79,12 +79,13 @@ my_theme <- function(by,
             text              = element_text(size = base_size),
             legend.position   = legend,
             legend.title      = element_blank(),
-            legend.text       = element_text(size = 12, margin = margin(r = 6)),
-            legend.key.size   = unit(1, "cm"),
-            legend.key.width  = unit(2, "cm"),
-            legend.spacing.x  = unit(2, "mm"),
-            legend.spacing.y  = unit(1, "mm"),
-            legend.margin     = margin(0.1, 0.1, 0.1, 0.1, "cm"),
+            legend.text       = element_text(size = 13, margin = margin(r = 6)),
+            legend.key.size   = unit(0.4, "cm"),
+            legend.key.width  = unit(0.4, "cm"),
+            legend.spacing.x  = unit(1, "mm"),
+            legend.spacing.y  = unit(0.5, "mm"),
+            legend.margin     = margin(2, 2, 2, 2, "pt"),
+            plot.title        = element_text(face = "bold"),
             plot.margin       = margin(1, 1, 1, 1, "cm"),
             panel.background  = element_blank(),
             plot.background   = element_blank(),
@@ -105,11 +106,11 @@ my_theme <- function(by,
         ),
         guides(
             color    = guide_legend(nrow = legend_nrow, byrow = TRUE,
-                                    label.theme = element_text(margin = margin(r = 40))),
+                                    label.theme = element_text(size = 10, margin = margin(r = 10))),
             fill     = guide_legend(nrow = legend_nrow, byrow = TRUE,
-                                    label.theme = element_text(margin = margin(r = 40))),
+                                    label.theme = element_text(size = 10, margin = margin(r = 10))),
             linetype = guide_legend(nrow = legend_nrow, byrow = TRUE,
-                                    label.theme = element_text(margin = margin(r = 40)))
+                                    label.theme = element_text(size = 10, margin = margin(r = 10)))
         )
 
     )
@@ -219,13 +220,27 @@ region_coverage_flag <- function(dt, group_var = "region_name") {
 }
 
 # Keep capitalization for FCV/IDA labels on Tab 1; lowercase others
+# label_keep_case <- function(x) {
+#     if (is.null(x)) return("")
+#     keep <- c("FCV (historical)", "FCV (latest)",
+#               "IDA (historical)", "IDA (latest)",
+#               "IDA+Blend (historical)", "IDA+Blend (current)")
+#     if (x %chin% keep) x else tolower(x)
+#
+# }
+
 label_keep_case <- function(x) {
     if (is.null(x)) return("")
     keep <- c("FCV (historical)", "FCV (latest)",
               "IDA (historical)", "IDA (latest)",
               "IDA+Blend (historical)", "IDA+Blend (current)")
-    if (x %chin% keep) x else tolower(x)
+
+    out <- if (x %chin% keep) x else tolower(x)
+    # Capitalize HICS if in the form "xxx, excl. HICs"
+    out <- gsub("excl\\.\\s*HICs", "excl. HICS", out, ignore.case = TRUE)
+    out
 }
+
 
 
 # Download dropdown
@@ -256,7 +271,7 @@ wrap_mideast_only <- function(x, width = 40) {
         if (is.na(s)) return(s)
         if (grepl("^Middle East", s)) {
             wrapped <- strwrap(s, width = width)
-            paste(wrapped[1:min(2, length(wrapped))], collapse = "\n\n\n")
+            paste(wrapped[1:min(2, length(wrapped))], collapse = "\n")
         } else {
             s
         }
