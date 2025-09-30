@@ -625,7 +625,7 @@ output$download_plot <- downloadHandler(
     ggplot2::ggsave(
       filename = file,
       plot     = p,
-      width    = 10,
+      width    = 15,
       height   = 5,
       units    = "in",
       dpi      = 300,
