@@ -289,10 +289,26 @@ filtered_data <- reactive({
     group_var <- underscore_var(input$group_var1)
     
     d1 <- merge(d1, cov_flags, by = c(group_var, "year"), all.x = TRUE)
-    d1[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage")]
+    d1[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage", na = "<50% coverage")]
+    setorder(d1, year)
+    d1[, isolated_dashed := {
+      prev_cov <- shift(cov_flag, 1, type = "lag")
+      next_cov <- shift(cov_flag, 1, type = "lead")
+      cov_flag == "<50% coverage" &
+        (is.na(prev_cov) | prev_cov != "<50% coverage") &
+        (is.na(next_cov) | next_cov != "<50% coverage")
+    }, by = c(group_var)]
     
     d0 <- merge(d0, cov_flags, by = c(group_var, "year"), all.x = TRUE)
-    d0[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage")]
+    d0[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage", na = "<50% coverage")]
+    setorder(d0, year)
+    d0[, isolated_dashed := {
+      prev_cov <- shift(cov_flag, 1, type = "lag")
+      next_cov <- shift(cov_flag, 1, type = "lead")
+      cov_flag == "<50% coverage" &
+        (is.na(prev_cov) | prev_cov != "<50% coverage") &
+        (is.na(next_cov) | next_cov != "<50% coverage")
+    }, by = c(group_var)]
 
   
 
@@ -342,16 +358,24 @@ if (tab == "Compare groups") {
     dA <- merge(dA, cov1, by.x = c("group", "year"),
                      by.y = c(underscore_var(input$group_var1), "year"),
                      all.x = TRUE)
-    dA[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage")]
+    dA[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage", na = "<50% coverage")]
     
     dB <- merge(dB, cov2, by.x = c("group", "year"),
                      by.y = c(underscore_var(input$group_var2), "year"),
                      all.x = TRUE)
-    dB[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage")]
+    dB[, cov_flag := fifelse(cov == 1, "≥50% coverage", "<50% coverage", na = "<50% coverage")]
 
   
   
   overlay <- rbindlist(list(dA, dB), use.names = TRUE, fill = TRUE)
+  setorder(overlay, year)
+  overlay[, isolated_dashed := {
+    prev_cov <- shift(cov_flag, 1, type = "lag")
+    next_cov <- shift(cov_flag, 1, type = "lead")
+    cov_flag == "<50% coverage" &
+      (is.na(prev_cov) | prev_cov != "<50% coverage") &
+      (is.na(next_cov) | next_cov != "<50% coverage")
+  }, by = .(line_label)]
 
   return(list(graph0 = d0, graph1 = d1, graph2 = d2, graph_overlay = overlay))
 }
@@ -842,6 +866,11 @@ output$main_plot <- renderPlot({
             linetype = "<50% coverage"),
         linewidth = 1, na.rm = TRUE
       ) +
+      # isolated single-year dashed points (geom_line won't render them alone)
+      geom_point(
+        aes(y = fifelse(isolated_dashed == TRUE, headcount * 100, NA_real_)),
+        shape = 16, size = 2, na.rm = TRUE
+      ) +
       labs(
         title = paste("Poverty rate by", label_keep_case(input$group_var1)),
         y     = "Poverty headcount, %",
@@ -866,6 +895,11 @@ p2 <- ggplot(d_list$graph0,
     aes(y = fifelse(cov_flag == "<50% coverage", pop_in_pov / 1e6, NA_real_),
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
+  ) +
+  # isolated single-year dashed points (geom_line won't render them alone)
+  geom_point(
+    aes(y = fifelse(isolated_dashed == TRUE, pop_in_pov / 1e6, NA_real_)),
+    shape = 16, size = 2, na.rm = TRUE
   ) +
   labs(
     title = paste("Number of poor by", label_keep_case(input$group_var1)),
@@ -920,6 +954,11 @@ p2 <- ggplot(d_list$graph0,
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
   ) +
+  # isolated single-year dashed points (geom_line won't render them alone)
+  geom_point(
+    aes(y = fifelse(isolated_dashed == TRUE, headcount * 100, NA_real_)),
+    shape = 16, size = 2, na.rm = TRUE
+  ) +
   labs(title = "Poverty rate",
        y = "Poverty headcount, %",
        x = "") +
@@ -942,6 +981,11 @@ p2 <- ggplot(d_list$graph0,
     aes(y = fifelse(cov_flag == "<50% coverage",  pop_in_pov / 1e6, NA_real_),
         linetype = "<50% coverage"),
     linewidth = 1, na.rm = TRUE
+  ) +
+  # isolated single-year dashed points (geom_line won't render them alone)
+  geom_point(
+    aes(y = fifelse(isolated_dashed == TRUE, pop_in_pov / 1e6, NA_real_)),
+    shape = 16, size = 2, na.rm = TRUE
   ) +
   labs(title = "Number of poor",
        y = "Millions of poor",
