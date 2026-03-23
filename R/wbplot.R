@@ -156,12 +156,14 @@ theme_wb <- function(
                 family = paste(WBSTYLE$font$fontFamily, get_font_weight(WBSTYLE$legendTitle$weight)),
                 color = get_color(WBSTYLE$legendTitle$color),
                 hjust = 0,
+                size = ggplot2::rel(1.2),
                 margin = ggplot2::margin(0,0,0,0)
             ),
             legend.title.position = "top",
             legend.text = ggplot2::element_text(
                 family = paste(WBSTYLE$font$fontFamily, get_font_weight(WBSTYLE$categoryLabel$weight)),
                 color = get_color(WBSTYLE$categoryLabel$color),
+                size = ggplot2::rel(1.1),
                 margin = ggplot2::margin(0, 0, 0, 2)
             ),
             legend.key.spacing.x = ggplot2::unit(0, "lines"),

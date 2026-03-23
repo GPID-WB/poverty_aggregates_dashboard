@@ -79,11 +79,11 @@ my_theme <- function(by,
             text              = element_text(size = base_size),
             legend.position   = legend,
             legend.title      = element_blank(),
-            legend.text       = element_text(size = 13, margin = margin(r = 6)),
-            legend.key.size   = unit(0.4, "cm"),
-            legend.key.width  = unit(0.4, "cm"),
-            legend.spacing.x  = unit(1, "mm"),
-            legend.spacing.y  = unit(0.5, "mm"),
+            legend.text       = element_text(size = 14, margin = margin(r = 6)),
+            legend.key.size   = unit(0.7, "cm"),
+            legend.key.width  = unit(0.7, "cm"),
+            legend.spacing.x  = unit(2, "mm"),
+            legend.spacing.y  = unit(1, "mm"),
             legend.margin     = margin(2, 2, 2, 2, "pt"),
             plot.title        = element_text(face = "bold"),
             plot.margin       = margin(1, 1, 1, 1, "cm"),
@@ -106,19 +106,19 @@ my_theme <- function(by,
         ),
         guides(
             color    = guide_legend(nrow = legend_nrow, byrow = TRUE,
-                                    label.theme = element_text(size = 10, margin = margin(r = 10))),
+                                    label.theme = element_text(size = 12, margin = margin(r = 10))),
             fill     = guide_legend(nrow = legend_nrow, byrow = TRUE,
-                                    label.theme = element_text(size = 10, margin = margin(r = 10))),
+                                    label.theme = element_text(size = 12, margin = margin(r = 10))),
             linetype = guide_legend(nrow = legend_nrow, byrow = TRUE,
-                                    label.theme = element_text(size = 10, margin = margin(r = 10)))
+                                    label.theme = element_text(size = 12, margin = margin(r = 10)))
         )
 
     )
 
     parts <- c(parts, list(
         scale_x_continuous(
-            limits = c(1981, 2025),
-            breaks = unique(c(1981, pretty(1981:2025, n = 6), 2025)),
+            limits = c(1981, 2026),
+            breaks = unique(c(1981, pretty(1981:2026, n = 6), 2026)),
             expand = expansion(mult = c(0, 0))
         ),
         scale_y_continuous(

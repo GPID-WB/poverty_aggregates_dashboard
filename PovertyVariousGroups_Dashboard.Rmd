@@ -411,7 +411,7 @@ output$download_filtered_csv <- downloadHandler(
 
   # compute estimate_type based on year and coverage
   tmp[, estimate_type := fifelse(
-    year == 2025, "nowcast",
+    year == 2026, "nowcast",
     fifelse(cov_flag == "≥50% coverage", "actual", "projection")
   )]
 
@@ -432,7 +432,7 @@ output$download_filtered_csv <- downloadHandler(
   ov[
     # estimate_type from year + cov_flag (already merged in overlay)
     , estimate_type := fifelse(
-        year == 2025, "nowcast",
+        year == 2026, "nowcast",
         fifelse(cov_flag == "≥50% coverage", "actual", "projection")
       )
   ][
@@ -475,9 +475,9 @@ output$download_filtered_dta <- downloadHandler(
     tmp[, cov_flag := fifelse(!is.na(cov_flag.x), cov_flag.x, cov_flag.y)]
   }
 
-  # estimate_type: 2025 => nowcast; ≥50% => actual; else projection
+  # estimate_type: 2026 => nowcast; ≥50% => actual; else projection
   tmp[, estimate_type := fifelse(
-    year == 2025, "nowcast",
+    year == 2026, "nowcast",
     fifelse(cov_flag == "≥50% coverage", "actual", "projection")
   )]
 
@@ -497,7 +497,7 @@ output$download_filtered_dta <- downloadHandler(
   ov <- filtered_data()$graph_overlay
   ov[
     , estimate_type := fifelse(
-        year == 2025, "nowcast",
+        year == 2026, "nowcast",
         fifelse(cov_flag == "≥50% coverage", "actual", "projection")
       )
   ][
@@ -565,9 +565,9 @@ data <- if (tab == "Poverty headcount and the number of poor") {
     tmp[, cov_flag := fifelse(!is.na(cov_flag.x), cov_flag.x, cov_flag.y)]
   }
 
-  # estimate_type: 2025 => nowcast; ≥50% => actual; else projection
+  # estimate_type: 2026 => nowcast; ≥50% => actual; else projection
   tmp[, estimate_type := fifelse(
-    year == 2025, "nowcast",
+    year == 2026, "nowcast",
     fifelse(cov_flag == "≥50% coverage", "actual", "projection")
   )]
 
@@ -588,7 +588,7 @@ data <- if (tab == "Poverty headcount and the number of poor") {
   ov <- filtered_data()$graph_overlay
   ov[
     , estimate_type := fifelse(
-        year == 2025, "nowcast",
+        year == 2026, "nowcast",
         fifelse(cov_flag == "≥50% coverage", "actual", "projection")
       )
   ][
@@ -671,7 +671,7 @@ tabsetPanel(
           <p>
             This dashboard presents poverty statistics for various groups that are not all currently reported on the 
             <em>World Bank’s Poverty and Inequality Platform (PIP)</em>, but are often used in reports and analyses.
-            It uses the latest vintage of PIP data (September 2025) and applies the <strong>2021 PPPs</strong>. 
+            It uses the latest vintage of PIP data (September 2026) and applies the <strong>2021 PPPs</strong>. 
             Users can also generate aggregate poverty for these and other groups using and modifying the Stata example code below.
           </p>
 
@@ -687,7 +687,7 @@ tabsetPanel(
           </p>
 
           <p>
-            With the September 2025 PIP update, PIP’s geographical regions were aligned with the 
+            With the September 2026 PIP update, PIP’s geographical regions were aligned with the 
             <em>World Bank’s official regional classification</em>. 
             Prior to this, PIP used its own regional definition (originating from the previous platform PovcalNet) 
             that excluded some high-income economies from regional aggregates, placing them into a separate group called 
@@ -785,7 +785,7 @@ conditionalPanel(
     plotOutput("main_plot", height = "auto"),
     div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
       HTML(
-  "Source: Poverty and Inequality Platform (September 2025)<br>",
+  "Source: Poverty and Inequality Platform (March 2026)<br>",
   "Note: Line style reflects data coverage for each group and year. ",
   "An estimate has coverage <strong>(solid line)</strong> if the underlying survey data covers at least 50% of the group's population in that year. ",
   "<strong>Dashed lines and gaps</strong> represent years when survey data covers less than 50% of the group's population. ",
