@@ -1,6 +1,6 @@
-
+*ado uninstall pip
 net install github, from("https://haghish.github.io/github/")
-github install worldbank/pip, version(0.10.15.9000)
+github install worldbank/pip, version(0.11.0.9000) replace
 
 * pip_survey_* 
 pip, clear server(qa) povline(3.0,4.2,8.3)

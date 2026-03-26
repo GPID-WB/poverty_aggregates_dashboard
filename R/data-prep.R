@@ -39,7 +39,7 @@ pip_pop <- read_dta("data/pip_population_20260324_2021_01_02_PROD.dta") %>%
     filter(country_code == "ARG" & data_level == "national")
 
 # Coverage data
-pip_cov <- read_dta("data/pip_country_coverage.dta") %>%
+pip_cov <- read_dta("data/pip_country_coverage_20260324_2021_01_02_PROD_qa0326_v02.dta") %>%
     select(country_code, year, coverage) %>%
     rename(iso3c = country_code) %>%
     distinct(iso3c, year, .keep_all = TRUE)
@@ -48,7 +48,7 @@ pip_cov <- read_dta("data/pip_country_coverage.dta") %>%
 
 # (PLACEHOLDER) Import downloaded latest updates for PIP data
 
-country_data <- read_dta("data/pip_fillgaps_20260324_2021_01_02_PROD.dta") %>%
+country_data <- read_dta("data/pip_fillgaps_20260324_2021_01_02_PROD_qa0326_V02.dta") %>%
     left_join(pip_pop, by = c("year", "country_code")) %>%
     mutate(population = if_else(country_code == "ARG", value, population)) %>%
     filter(country_name == "Argentina" | reporting_level == "national") %>%
