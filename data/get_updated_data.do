@@ -16,6 +16,10 @@ save "C:\WBG\poverty_aggregates_dashboard\data\pip_fillgaps_20260922_2021_01_02_
 pip wb, clear server(qa) fillgaps povline(3.0,4.2,8.3) version(20260922_2021_01_02_PROD)
 save "C:\WBG\poverty_aggregates_dashboard\data\pip_aggregates_20260922_2021_01_02_PROD.dta", replace
 
-* pip_country_coverage
+* pip_country_coverage_*
 pip tables, table(country_coverage) clear server(qa) version(20260922_2021_01_02_PROD)
-save "C:\WBG\poverty_aggregates_dashboard\data\pip_aggregates_20260922_2021_01_02_PROD.dta", replace
+save "C:\WBG\poverty_aggregates_dashboard\data\pip_country_coverage_20260922_2021_01_02_PROD.dta", replace
+
+* pip_population_*
+pip tables, table(pop) clear server(qa) version(20260922_2021_01_02_PROD)
+save "C:\WBG\poverty_aggregates_dashboard\data\pip_population_20260922_2021_01_02_PROD.dta", replace
