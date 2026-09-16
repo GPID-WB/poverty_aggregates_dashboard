@@ -18,4 +18,4 @@ save "C:\WBG\poverty_aggregates_dashboard\data\pip_aggregates_20260922_2021_01_0
 
 * pip_country_coverage
 pip tables, table(country_coverage) clear server(qa) version(20260922_2021_01_02_PROD)
-save "C:\WBG\poverty_aggregates_dashboard\data\pip_aggregates_20260922_2021_01_02_PROD.dta", replace
+save "C:\WBG\poverty_aggregates_dashboard\data\pip_country_coverage_20260922_2021_01_02_PROD.dta", replace
