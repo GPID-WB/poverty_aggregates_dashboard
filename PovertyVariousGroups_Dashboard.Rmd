@@ -782,7 +782,7 @@ tabsetPanel(
     save `group_names'
     
     // load pip country data
-    pip, clear fillgaps server(dev)
+    pip, clear fillgaps
     merge m:1 country_code using `group_names', nogen
     gen double pop_in_poverty = headcount * population
     collapse (mean) headcount (rawsum) pop_in_poverty [aw=population], by(fcv* year)
