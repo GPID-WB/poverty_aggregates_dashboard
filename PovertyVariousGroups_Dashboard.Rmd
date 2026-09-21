@@ -809,7 +809,7 @@ conditionalPanel(
     plotOutput("main_plot", height = "auto"),
     div(style = "margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: #555;",
       HTML(
-  "Source: Poverty and Inequality Platform (March 2026)<br>",
+  "Source: Poverty and Inequality Platform (September 2026)<br>",
   "Note: Line style reflects data coverage for each group and year. ",
   "An estimate has coverage <strong>(solid line)</strong> if the underlying survey data covers at least 50% of the group's population in that year. ",
   "<strong>Dashed lines and gaps</strong> represent years when survey data covers less than 50% of the group's population. ",
