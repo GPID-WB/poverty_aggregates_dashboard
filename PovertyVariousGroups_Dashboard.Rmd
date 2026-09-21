@@ -732,7 +732,7 @@ tabsetPanel(
 
           <p>
             For income group, FCV, and IDA status, the dashboard presents two types of aggregates: 
-            <strong>latest classification</strong> (where each country is grouped based on its most recent fiscal year category, held constant over time), and 
+            <strong>latest classification</strong> (where each country is grouped based on its 2027 fiscal year category, held constant over time), and 
             <strong>historical classification</strong> (where groupings change year-to-year based on past classifications). 
             The historical series may exhibit more volatility due to these reclassifications over time. 
             For the FCV and IDA categories, the historical classifications begin in 1998, when these groups were first introduced. 
